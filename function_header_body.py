@@ -1,9 +1,9 @@
 from tkinter import *
 from time import *
-# root = Tk()
-# root.title('Library Management System')
-# root.iconbitmap('logo_icon.ico')
-# root.geometry('1220x880')
+root = Tk()
+root.title('Library Management System')
+root.iconbitmap('C:\Users\ASUS\Library-Management-System\logo_icon.ico')
+root.geometry('1220x880')
 def header_part(root):
     
     header = Frame(root, bg="#a6093d",  height=170)
@@ -82,6 +82,6 @@ def body_part(root):
 
     update_time()
     return body_frame
-# header = header_part(root)
-# body = body_part(root)
-# root.mainloop()
+header = header_part(root)
+body = body_part(root)
+root.mainloop()
