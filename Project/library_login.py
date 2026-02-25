@@ -23,7 +23,7 @@ root.title("Library Management System")
 root.configure(bg="#1f2a44")
 
 main_frame = tk.Frame(root, bg="#b3003c")
-main_frame.pack(fill="both", expand=True, padx=60, pady=40)
+main_frame.pack(fill="both", expand=True, padx=110, pady=100)
 
 main_frame.grid_columnconfigure(0, weight=1)
 main_frame.grid_columnconfigure(1, weight=0)
@@ -35,7 +35,7 @@ left_frame = tk.Frame(main_frame, bg="#b3003c")
 left_frame.grid(row=0, column=0)
 
 
-img_left = Image.open("logo.png")
+img_left = Image.open(r"C:\Users\ASUS\Library-Management-System\Project\logo.png")
 img_left = img_left.resize((180, 180))   
 logo_img = ImageTk.PhotoImage(img_left)
 
@@ -58,7 +58,7 @@ right_side = tk.Frame(main_frame, bg="#b3003c")
 right_side.grid(row=0, column=2, padx=60)
 
 
-img_right = Image.open("profile.png")
+img_right = Image.open(r"C:\Users\ASUS\Library-Management-System\Project\profile.png")
 img_right = img_right.resize((120, 120))   
 right_img = ImageTk.PhotoImage(img_right)
 
