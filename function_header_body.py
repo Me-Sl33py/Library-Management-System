@@ -31,10 +31,12 @@ def header_part(root):
     profile_image = PhotoImage(file='profile.png')
     small_profile_image = profile_image.subsample(5,5)
     
-    profile_label = Label(profile_frame, image=small_profile_image, bg="#a6093d")
+    profile_label = Button(profile_frame, image=small_profile_image, bg="#a6093d", bd=0,
+                  relief="flat",
+                  highlightthickness=0)
     profile_label.image = small_profile_image
     profile_label.pack(side= 'right', padx=30)
-
+    hover_color(profile_label, "#a6093d", "#21ebf9")
     greetings = [
         "Namaste",        # Nepal
         "Konnichiwa",     # Japan
@@ -82,6 +84,19 @@ def body_part(root):
 
     update_time()
     return body_frame
+
+def hover_color(widget, normal_bg, hover_bg):
+
+    widget.config(bg=normal_bg)
+    
+    def on_enter(e):
+        widget['bg'] = hover_bg
+
+    def on_leave(e):
+        widget['bg'] = normal_bg
+
+    widget.bind("<Enter>", on_enter)
+    widget.bind("<Leave>", on_leave)
 # header = header_part(root)
 # body = body_part(root)
 # root.mainloop()
