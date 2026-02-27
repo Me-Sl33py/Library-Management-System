@@ -1,7 +1,7 @@
 from tkinter import *
 from function_header_body import header_part, body_part, hover_color
 import tkinter.messagebox as messagebox
-from database_operations import add_book_to_db, update_book_in_db, get_book_by_id  # Import database functions
+from database_operations import add_book_to_db, update_book_in_db, get_book_by_id
 
 root = Tk()
 root.title("Library Management System - Add/Update Book")
@@ -11,13 +11,31 @@ root.iconbitmap("logo_icon.ico")
 header = header_part(root)
 body = body_part(root)
 
-# Main container
-container = Frame(body, bg="#5D48B8", width=800, height=500)
+# Main container with scrollbar
+container = Frame(body, bg="#5D48B8")
 container.place(relx=0.5, rely=0.5, anchor=CENTER)
-container.pack_propagate(False)
 
-# Title with icon
-title_frame = Frame(container, bg="#5D48B8")
+# anvas with scrollbar
+canvas = Canvas(container, bg="#5D48B8", width=850, height=500)
+canvas.pack(side=LEFT, fill=BOTH, expand=True)
+
+scrollbar = Scrollbar(container, orient=VERTICAL, command=canvas.yview)
+scrollbar.pack(side=RIGHT, fill=Y)
+
+canvas.configure(yscrollcommand=scrollbar.set)
+
+#frame inside the canvas
+content_frame = Frame(canvas, bg="#5D48B8")
+canvas.create_window((0, 0), window=content_frame, anchor="nw")
+
+# Update scrollregion when content changes
+def update_scrollregion(event=None):
+    canvas.configure(scrollregion=canvas.bbox("all"))
+
+content_frame.bind("<Configure>", update_scrollregion)
+
+# Title
+title_frame = Frame(content_frame, bg="#5D48B8")
 title_frame.pack(pady=30)
 
 title_icon = Label(title_frame, text="📖", font=("Arial", 40), 
@@ -29,12 +47,11 @@ title_label = Label(title_frame, text="Add / Update Book",
 title_label.pack(side=LEFT)
 
 # Form frame
-form_frame = Frame(container, bg="#0d1b4c")
+form_frame = Frame(content_frame, bg="#0d1b4c")
 form_frame.pack(pady=20)
 
-# Labels and Entries with icons
+# Labels and Entries
 def create_form_row(icon, label_text, row):
-    # Icon and label frame
     label_frame = Frame(form_frame, bg="#0d1b4c")
     label_frame.grid(row=row, column=0, padx=20, pady=15, sticky="w")
     
@@ -45,85 +62,100 @@ def create_form_row(icon, label_text, row):
     Label(label_frame, text=label_text, bg="#5D48B8", fg="white", 
           font=("Arial", 14)).pack(side=LEFT)
     
-    # Entry field
     entry = Entry(form_frame, font=("Arial", 14), width=40)
     entry.grid(row=row, column=1, padx=20, pady=15)
     return entry
 
-# Create form fields with icons
-book_name_entry = create_form_row("📕", "Book Name:", 0)
-author_entry = create_form_row("✍️", "Author:", 1)
-year_entry = create_form_row("📅", "Published Year:", 2)
-quantity_entry = create_form_row("🔢", "Quantity:", 3)
+#form
+book_id_entry = create_form_row("🆔", "Book ID (for update only):", 0)
+book_name_entry = create_form_row("📕", "Book Name:", 1)
+author_entry = create_form_row("✍️", "Author:", 2)
+year_entry = create_form_row("📅", "Published Year:", 3)
+quantity_entry = create_form_row("🔢", "Quantity:", 4)
+
 
 # Buttons frame
-button_frame = Frame(container, bg="#5D48B8")
+button_frame = Frame(content_frame, bg="#5D48B8")
 button_frame.pack(pady=30)
 
 def add_book():
-    name = book_name_entry.get()
-    author = author_entry.get()
-    year = year_entry.get()
-    quantity = quantity_entry.get()
+    name = book_name_entry.get().strip()
+    author = author_entry.get().strip()
+    year = year_entry.get().strip()
+    quantity = quantity_entry.get().strip()
     
     if not all([name, author, year, quantity]):
-        messagebox.showerror("Error", "All fields are required!")
+        messagebox.showerror("Error", "All fields except Book ID are required!")
         return
     
     try:
-        year = int(year)
-        quantity = int(quantity)
-        if year < 0 or quantity < 0:
-            messagebox.showerror("Error", "Year and Quantity must be positive!")
+        year_int = int(year)
+        quantity_int = int(quantity)
+        
+        if year_int < 0:
+            messagebox.showerror("Error", "Year must be a positive number!")
             return
         
-        # Call database function to add book
-        if add_book_to_db(name, author, year, quantity):
+        if quantity_int <= 0:
+            messagebox.showerror("Error", "Quantity must be greater than 0!")
+            return
+        
+        if add_book_to_db(name, author, year_int, quantity_int):
             messagebox.showinfo("Success", "Book added successfully to database!")
-            
-            # Clear fields
-            book_name_entry.delete(0, END)
-            author_entry.delete(0, END)
-            year_entry.delete(0, END)
-            quantity_entry.delete(0, END)
+            clear_form()
         else:
             messagebox.showerror("Error", "Failed to add book to database!")
         
     except ValueError:
-        messagebox.showerror("Error", "Year and Quantity must be numbers!")
+        messagebox.showerror("Error", "Year and Quantity must be valid numbers!")
 
 def update_book():
-    # For update, we need book ID - you might want to add a Book ID field
-    # For now, let's use book name to find and update
-    name = book_name_entry.get()
-    author = author_entry.get()
-    year = year_entry.get()
-    quantity = quantity_entry.get()
+    book_id = book_id_entry.get().strip()
+    name = book_name_entry.get().strip()
+    author = author_entry.get().strip()
+    year = year_entry.get().strip()
+    quantity = quantity_entry.get().strip()
+    
+    if not book_id:
+        messagebox.showerror("Error", "Book ID is required for update!")
+        return
     
     if not all([name, author, year, quantity]):
         messagebox.showerror("Error", "All fields are required!")
         return
     
     try:
-        year = int(year)
-        quantity = int(quantity)
-        if year < 0 or quantity < 0:
-            messagebox.showerror("Error", "Year and Quantity must be positive!")
+        book_id_int = int(book_id)
+        year_int = int(year)
+        quantity_int = int(quantity)
+        
+        if year_int < 0:
+            messagebox.showerror("Error", "Year must be a positive number!")
             return
         
-        # Ask for confirmation
+        if quantity_int < 0:
+            messagebox.showerror("Error", "Quantity must be 0 or greater!")
+            return
+        
         confirm = messagebox.askyesno("Confirm Update", 
-                                       f"Update book '{name}' by {author}?\nYear: {year}, Quantity: {quantity}")
+                                      f"Update Book ID {book_id_int}?\n\n"
+                                      f"Title: {name}\n"
+                                      f"Author: {author}\n"
+                                      f"Year: {year_int}\n"
+                                      f"Quantity: {quantity_int}")
+        
         if confirm:
-            # Here you would need book_id to update specific book
-            # For now, this shows how to call the update function
-            messagebox.showinfo("Info", "Update function requires Book ID. Please add a Book ID field.")
-            # Example: update_book_in_db(book_id, name, author, year, quantity)
+            success, message = update_book_in_db(book_id_int, name, author, year_int, quantity_int)
+            
+            if success:
+                messagebox.showinfo("Success", message)
+                clear_form()
+            else:
+                messagebox.showerror("Error", message)
         
     except ValueError:
-        messagebox.showerror("Error", "Year and Quantity must be numbers!")
+        messagebox.showerror("Error", "Book ID, Year and Quantity must be valid numbers!")
 
-# Create buttons with icons
 def create_icon_button(parent, text, icon, color, command):
     btn_frame = Frame(parent, bg="white", relief="raised", bd=2)
     btn_frame.pack(side=LEFT, padx=10)
@@ -136,7 +168,6 @@ def create_icon_button(parent, text, icon, color, command):
                        bg="white", fg="black")
     text_label.pack(side=LEFT, padx=(0, 10))
     
-    # Bind click events
     def on_click(e):
         command()
     
@@ -144,7 +175,6 @@ def create_icon_button(parent, text, icon, color, command):
     icon_label.bind("<Button-1>", on_click)
     text_label.bind("<Button-1>", on_click)
     
-    # Hover effects
     def on_enter(e):
         btn_frame.config(bg="lightblue")
         icon_label.config(bg="lightblue")
@@ -164,17 +194,27 @@ def create_icon_button(parent, text, icon, color, command):
     
     return btn_frame
 
-# Create the buttons
+#  buttons
 add_btn = create_icon_button(button_frame, "Add Book", "➕", "#4CAF50", add_book)
 update_btn = create_icon_button(button_frame, "Update Book", "✏️", "#2196F3", update_book)
 
-# Back button with icon
+# Clear button
+def clear_form():
+    book_id_entry.delete(0, END)
+    book_name_entry.delete(0, END)
+    author_entry.delete(0, END)
+    year_entry.delete(0, END)
+    quantity_entry.delete(0, END)
+
+clear_btn = create_icon_button(button_frame, "Clear Form", "🗑️", "#FF9800", clear_form)
+
+# Back button
 def go_back():
     root.destroy()
     import home_page
     home_page.root.mainloop()
 
-back_frame = Frame(container, bg="#a6093d", relief="raised", bd=2)
+back_frame = Frame(content_frame, bg="#a6093d", relief="raised", bd=2)
 back_frame.place(x=20, y=20)
 
 back_icon = Label(back_frame, text="←", font=("Arial", 16), 
@@ -185,7 +225,6 @@ back_text = Label(back_frame, text="Back to Home", font=("Arial", 12),
                   bg="#a6093d", fg="white")
 back_text.pack(side=LEFT, padx=(0, 5))
 
-# Bind click events to back button
 def on_back_click(e):
     go_back()
 
@@ -193,7 +232,6 @@ back_frame.bind("<Button-1>", on_back_click)
 back_icon.bind("<Button-1>", on_back_click)
 back_text.bind("<Button-1>", on_back_click)
 
-# Hover effect for back button
 def on_back_enter(e):
     back_frame.config(bg="#4fe4ee")
     back_icon.config(bg="#4fe4ee")
@@ -210,5 +248,28 @@ back_icon.bind("<Enter>", on_back_enter)
 back_icon.bind("<Leave>", on_back_leave)
 back_text.bind("<Enter>", on_back_enter)
 back_text.bind("<Leave>", on_back_leave)
+
+# Instructions
+instructions_frame = Frame(content_frame, bg="#5D48B8")
+instructions_frame.pack(pady=20)
+
+instructions_text = """Instructions:
+• To ADD: Leave Book ID empty, fill other fields, click 'Add Book'
+• To UPDATE: Enter Book ID, fill all fields, click 'Update Book'
+• To CLEAR: Click 'Clear Form'"""
+
+instructions_label = Label(instructions_frame, text=instructions_text, 
+                          bg="#5D48B8", fg="white", font=("Arial", 10), 
+                          justify=LEFT)
+instructions_label.pack()
+
+# Set focus
+book_name_entry.focus_set()
+
+# Add mouse wheel scrolling
+def on_mousewheel(event):
+    canvas.yview_scroll(int(-1*(event.delta/120)), "units")
+
+canvas.bind_all("<MouseWheel>", on_mousewheel)
 
 root.mainloop()
