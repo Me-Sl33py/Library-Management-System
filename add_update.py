@@ -34,12 +34,53 @@ def update_scrollregion(event=None):
 
 content_frame.bind("<Configure>", update_scrollregion)
 
+# Back button at top left (fixed position in container)
+back_frame = Frame(container, bg="#a6093d", relief="raised", bd=2)
+back_frame.place(x=20, y=20)
+
+back_icon = Label(back_frame, text="←", font=("Arial", 16), 
+                  bg="#a6093d", fg="white")
+back_icon.pack(side=LEFT, padx=5)
+
+back_text = Label(back_frame, text="Back to Home", font=("Arial", 12), 
+                  bg="#a6093d", fg="white")
+back_text.pack(side=LEFT, padx=(0, 5))
+
+def go_back():
+    root.destroy()
+    import home_page
+    home_page.root.mainloop()
+
+def on_back_click(e):
+    go_back()
+
+back_frame.bind("<Button-1>", on_back_click)
+back_icon.bind("<Button-1>", on_back_click)
+back_text.bind("<Button-1>", on_back_click)
+
+def on_back_enter(e):
+    back_frame.config(bg="#4fe4ee")
+    back_icon.config(bg="#4fe4ee")
+    back_text.config(bg="#4fe4ee")
+
+def on_back_leave(e):
+    back_frame.config(bg="#a6093d")
+    back_icon.config(bg="#a6093d")
+    back_text.config(bg="#a6093d")
+
+back_frame.bind("<Enter>", on_back_enter)
+back_frame.bind("<Leave>", on_back_leave)
+back_icon.bind("<Enter>", on_back_enter)
+back_icon.bind("<Leave>", on_back_leave)
+back_text.bind("<Enter>", on_back_enter)
+back_text.bind("<Leave>", on_back_leave)
+
 # Title
 title_frame = Frame(content_frame, bg="#5D48B8")
 title_frame.pack(pady=30)
 
 title_icon = Label(title_frame, text="📖", font=("Arial", 40), 
-                   bg="#0d1b4c", fg="white")
+                   bg="#5D48B8", fg="white")
 title_icon.pack(side=LEFT, padx=10)
 
 title_label = Label(title_frame, text="Add / Update Book", 
@@ -47,16 +88,16 @@ title_label = Label(title_frame, text="Add / Update Book",
 title_label.pack(side=LEFT)
 
 # Form frame
-form_frame = Frame(content_frame, bg="#0d1b4c")
+form_frame = Frame(content_frame, bg="#5D48B8")
 form_frame.pack(pady=20)
 
 # Labels and Entries
 def create_form_row(icon, label_text, row):
-    label_frame = Frame(form_frame, bg="#0d1b4c")
+    label_frame = Frame(form_frame, bg="#5D48B8")
     label_frame.grid(row=row, column=0, padx=20, pady=15, sticky="w")
     
     icon_label = Label(label_frame, text=icon, font=("Arial", 16), 
-                       bg="#0d1b4c", fg="white")
+                       bg="#5D48B8", fg="white")
     icon_label.pack(side=LEFT, padx=(0, 10))
     
     Label(label_frame, text=label_text, bg="#5D48B8", fg="white", 
@@ -207,47 +248,6 @@ def clear_form():
     quantity_entry.delete(0, END)
 
 clear_btn = create_icon_button(button_frame, "Clear Form", "🗑️", "#FF9800", clear_form)
-
-# Back button
-def go_back():
-    root.destroy()
-    import home_page
-    home_page.root.mainloop()
-
-back_frame = Frame(content_frame, bg="#a6093d", relief="raised", bd=2)
-back_frame.place(x=20, y=20)
-
-back_icon = Label(back_frame, text="←", font=("Arial", 16), 
-                  bg="#a6093d", fg="white")
-back_icon.pack(side=LEFT, padx=5)
-
-back_text = Label(back_frame, text="Back to Home", font=("Arial", 12), 
-                  bg="#a6093d", fg="white")
-back_text.pack(side=LEFT, padx=(0, 5))
-
-def on_back_click(e):
-    go_back()
-
-back_frame.bind("<Button-1>", on_back_click)
-back_icon.bind("<Button-1>", on_back_click)
-back_text.bind("<Button-1>", on_back_click)
-
-def on_back_enter(e):
-    back_frame.config(bg="#4fe4ee")
-    back_icon.config(bg="#4fe4ee")
-    back_text.config(bg="#4fe4ee")
-
-def on_back_leave(e):
-    back_frame.config(bg="#a6093d")
-    back_icon.config(bg="#a6093d")
-    back_text.config(bg="#a6093d")
-
-back_frame.bind("<Enter>", on_back_enter)
-back_frame.bind("<Leave>", on_back_leave)
-back_icon.bind("<Enter>", on_back_enter)
-back_icon.bind("<Leave>", on_back_leave)
-back_text.bind("<Enter>", on_back_enter)
-back_text.bind("<Leave>", on_back_leave)
 
 # Instructions
 instructions_frame = Frame(content_frame, bg="#5D48B8")

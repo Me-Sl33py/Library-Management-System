@@ -180,3 +180,113 @@ def delete_book_from_db(book_id):
     except sqlite3.Error as e:
         print(f"Error deleting book: {e}")
         return False, f"Database error: {e}"
+    
+def get_all_users():
+    """Get all registered users from the database"""
+    try:
+        conn = sqlite3.connect('library.db')
+        cursor = conn.cursor()
+        
+        cursor.execute('''
+            SELECT user_id, username, role 
+            FROM users 
+            ORDER BY user_id
+        ''')
+        
+        users = []
+        for row in cursor.fetchall():
+            users.append({
+                'user_id': row[0],
+                'username': row[1],
+                'role': row[2]
+            })
+        
+        conn.close()
+        return users
+        
+    except Exception as e:
+        print(f"Error getting users: {e}")
+        return []
+
+def delete_user_from_db(user_id):
+    """Delete a user from the database"""
+    try:
+        conn = sqlite3.connect('library.db')
+        cursor = conn.cursor()
+        
+        # First check if user exists
+        cursor.execute('SELECT role FROM users WHERE user_id = ?', (user_id,))
+        user = cursor.fetchone()
+        
+        if not user:
+            conn.close()
+            return False, "User not found!"
+        
+        # Check if user is admin
+        if user[0] == 'admin':
+            conn.close()
+            return False, "Cannot delete admin accounts!"
+        
+        # Delete the user
+        cursor.execute('DELETE FROM users WHERE user_id = ?', (user_id,))
+        conn.commit()
+        conn.close()
+        
+        return True, f"User with ID {user_id} deleted successfully!"
+        
+    except Exception as e:
+        conn.close()
+        return False, f"Error deleting user: {str(e)}"
+
+def get_all_history():
+    """Retrieve all issue history records with user and book details."""
+    try:
+        conn = create_connection()
+        if conn is None:
+            return []
+
+        cursor = conn.cursor()
+        cursor.execute("""
+            SELECT 
+                issues.issue_id,
+                issues.user_id,
+                users.username,
+                issues.book_id,
+                books.title,
+                issues.issue_date,
+                issues.return_date
+            FROM issues
+            JOIN users ON issues.user_id = users.user_id
+            JOIN books ON issues.book_id = books.book_id
+            ORDER BY issues.issue_date DESC
+        """)
+        records = cursor.fetchall()
+        conn.close()
+
+        # Format data into list of dicts
+        result = []
+        for row in records:
+            issue_id = row[0]
+            user_id = row[1]
+            user_name = row[2]
+            book_id = row[3]
+            book_name = row[4]
+            issue_date = row[5]
+            return_date = row[6]
+            status = "Returned" if return_date else "Not Returned"
+
+            result.append({
+                'issue_id': issue_id,
+                'user_id': user_id,
+                'user_name': user_name,
+                'book_name': book_name,
+                'issue_date': issue_date,
+                'return_date': return_date if return_date else "N/A",
+                'status': status
+            })
+
+        return result
+
+    except sqlite3.Error as e:
+        print(f"Error fetching history: {e}")
+        return []
