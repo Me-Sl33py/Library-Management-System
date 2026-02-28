@@ -7,7 +7,7 @@ def create_connection():
 def create_tables():
     conn = create_connection()
     cursor = conn.cursor()
-
+    
     # -------- BOOKS TABLE --------
     cursor.execute("""
     CREATE TABLE IF NOT EXISTS books (
@@ -21,10 +21,11 @@ def create_tables():
 
     # -------- USERS TABLE --------
     cursor.execute("""
-    CREATE TABLE IF NOT EXISTS users (
+        CREATE TABLE IF NOT EXISTS users (
         user_id INTEGER PRIMARY KEY AUTOINCREMENT,
         username TEXT NOT NULL UNIQUE,
-        role TEXT CHECK(role IN ('admin','user')) NOT NULL
+        role TEXT CHECK(role IN ('admin','user')) NOT NULL,
+        password TEXT NOT NULL
     )
     """)
 
@@ -73,12 +74,12 @@ def seed_data():
         if user_count == 0:
             # Sample Users
             users = [
-                ('Manish', 'admin'),
-                ('Tshering', 'admin'),
-                ('Hilson', 'user'),
-                ('Bibek', 'user')
+                ('Manish', 'adminpass', 'admin'),
+                ('Tshering', 'adminpass', 'admin'),
+                ('Hilson', 'userpass1', 'user'),
+                ('Bibek', 'userpass2', 'user')
             ]
-            cursor.executemany("INSERT INTO users (username, role) VALUES (?, ?)", users)
+            cursor.executemany("INSERT INTO users (username, password, role) VALUES (?, ?, ?)", users)
             print("Sample users added ✅")
         else:
             print(f"Users already exist ({user_count} records)")

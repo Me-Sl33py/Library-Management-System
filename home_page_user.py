@@ -1,26 +1,16 @@
 from tkinter import *
-import tkinter.messagebox as messagebox
 from function_header_body import header_part, body_part
 
 
 def open_page(root, module_name):
-    """Destroy current window and open another page's run() function."""
+    """
+    Safely close current window and open another page.
+    Every page file must expose a run() function.
+    """
+    root.destroy()
     import importlib
-    try:
-        mod = importlib.import_module(module_name)
-        root.destroy()
-        mod.run()
-    except ModuleNotFoundError:
-        # ✅ Shows friendly error instead of crashing if file is missing
-        messagebox.showerror(
-            "Page Not Found",
-            f"Could not find '{module_name}.py'\n\nMake sure the file exists and is named correctly."
-        )
-    except AttributeError:
-        messagebox.showerror(
-            "Missing run()",
-            f"'{module_name}.py' exists but has no run() function.\n\nAdd run() to that file."
-        )
+    mod = importlib.import_module(module_name)
+    mod.run()
 
 
 def run():
@@ -37,22 +27,23 @@ def run():
     container.place(relx=0.5, rely=0.5, anchor=CENTER)
     container.pack_propagate(False)
 
+    # ── Grid config ────────────────────────────────────────────────
     for i in range(3):
         container.columnconfigure(i, weight=1, uniform="col")
     for i in range(2):
         container.rowconfigure(i, weight=1, uniform="row")
 
     # ── Button definitions ─────────────────────────────────────────
-    # "page" must exactly match the .py filename (without .py)
     buttons = [
         {"text": "Add / Update\nBook", "icon": "📖", "color": "#4CAF50", "page": "add_update"},
-        {"text": "Delete Books",        "icon": "🗑️", "color": "#f44336", "page": "delete_books"},
+        {"text": "Delete Books",        "icon": "🗑️", "color": "#f44336", "page": "delete_book"},
         {"text": "Available Books",     "icon": "📚", "color": "#2196F3", "page": "available_books"},
-        {"text": "Register Users",      "icon": "👤", "color": "#FF9800", "page": "registered_user"},
-        {"text": "History",             "icon": "📋", "color": "#9C27B0", "page": "history"},
-        {"text": "Records",             "icon": "📊", "color": "#009688", "page": "records"},
+        {"text": "Register Users",      "icon": "👤", "color": "#FF9800", "page": "register_users"},
+        {"text": "History",             "icon": "📋", "color": "#9C27B0", "page": "history_page"},
+        {"text": "Records",             "icon": "📊", "color": "#009688", "page": "records_page"},
     ]
 
+    # ── Build each card-button ─────────────────────────────────────
     for index, btn_info in enumerate(buttons):
         r = index // 3
         c = index % 3
@@ -68,7 +59,7 @@ def run():
                            font=("Arial", 14, "bold"), bg="white", fg="black")
         text_label.pack(pady=(0, 20))
 
-        # ✅ default-arg trick — captures correct page per loop iteration
+        # ✅ default-arg trick — captures correct value per loop iteration
         def on_click(e, page=btn_info["page"]):
             open_page(root, page)
 

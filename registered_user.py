@@ -1,274 +1,155 @@
 from tkinter import *
-from function_header_body import header_part, body_part
 import tkinter.messagebox as messagebox
+from function_header_body import header_part, body_part
 from database_operations import get_all_users, delete_user_from_db
 
-root = Tk()
-root.title("Library Management System - Manage Users")
-root.geometry("1220x900")
-root.iconbitmap("logo_icon.ico")
 
-header = header_part(root)
-body = body_part(root)
-
-# Main container with scrollbar
-container = Frame(body, bg="#5D48B8")
-container.place(relx=0.5, rely=0.5, anchor=CENTER)
-
-# Canvas with scrollbar
-canvas = Canvas(container, bg="#5D48B8", width=850, height=500)
-canvas.pack(side=LEFT, fill=BOTH, expand=True)
-
-scrollbar = Scrollbar(container, orient=VERTICAL, command=canvas.yview)
-scrollbar.pack(side=RIGHT, fill=Y)
-
-canvas.configure(yscrollcommand=scrollbar.set)
-
-# Frame inside the canvas
-content_frame = Frame(canvas, bg="#5D48B8")
-canvas.create_window((0, 0), window=content_frame, anchor="nw")
-
-# Update scrollregion
-def update_scrollregion(event=None):
-    canvas.configure(scrollregion=canvas.bbox("all"))
-
-content_frame.bind("<Configure>", update_scrollregion)
-
-# Back button at top left 
-back_frame = Frame(container, bg="#a6093d", relief="raised", bd=2)
-back_frame.place(x=20, y=20)
-
-back_icon = Label(back_frame, text="←", font=("Arial", 16), 
-                  bg="#a6093d", fg="white")
-back_icon.pack(side=LEFT, padx=5)
-
-back_text = Label(back_frame, text="Back to Home", font=("Arial", 12), 
-                  bg="#a6093d", fg="white")
-back_text.pack(side=LEFT, padx=(0, 5))
-
-def go_back():
+def open_page(root, module_name):
     root.destroy()
-    import home_page
-    home_page.root.mainloop()
+    import importlib
+    importlib.import_module(module_name).run()
 
-def on_back_click(e):
-    go_back()
 
-back_frame.bind("<Button-1>", on_back_click)
-back_icon.bind("<Button-1>", on_back_click)
-back_text.bind("<Button-1>", on_back_click)
+def run():
+    root = Tk()
+    root.title("Library Management System - Manage Users")
+    root.geometry("1220x900")
+    root.iconbitmap("logo_icon.ico")
 
-def on_back_enter(e):
-    back_frame.config(bg="#4fe4ee")
-    back_icon.config(bg="#4fe4ee")
-    back_text.config(bg="#4fe4ee")
+    header = header_part(root)
+    body   = body_part(root)
 
-def on_back_leave(e):
-    back_frame.config(bg="#a6093d")
-    back_icon.config(bg="#a6093d")
-    back_text.config(bg="#a6093d")
+    container = Frame(body, bg="#5D48B8")
+    container.place(relx=0.5, rely=0.5, anchor=CENTER)
 
-back_frame.bind("<Enter>", on_back_enter)
-back_frame.bind("<Leave>", on_back_leave)
-back_icon.bind("<Enter>", on_back_enter)
-back_icon.bind("<Leave>", on_back_leave)
-back_text.bind("<Enter>", on_back_enter)
-back_text.bind("<Leave>", on_back_leave)
+    canvas = Canvas(container, bg="#5D48B8", width=850, height=500)
+    canvas.pack(side=LEFT, fill=BOTH, expand=True)
+    scrollbar = Scrollbar(container, orient=VERTICAL, command=canvas.yview)
+    scrollbar.pack(side=RIGHT, fill=Y)
+    canvas.configure(yscrollcommand=scrollbar.set)
 
-# Title with icon
-title_frame = Frame(content_frame, bg="#5D48B8")
-title_frame.pack(pady=30)
+    content_frame = Frame(canvas, bg="#5D48B8")
+    canvas.create_window((0, 0), window=content_frame, anchor="nw")
 
-title_icon = Label(title_frame, text="👥", font=("Arial", 40), 
-                   bg="#5D48B8", fg="white")
-title_icon.pack(side=LEFT, padx=10)
+    def update_scrollregion(event=None):
+        canvas.configure(scrollregion=canvas.bbox("all"))
+    content_frame.bind("<Configure>", update_scrollregion)
 
-title_label = Label(title_frame, text="Registered Users", 
-                   bg="#5D48B8", fg="white", font=("Arial", 24, "bold"))
-title_label.pack(side=LEFT)
+    def on_mousewheel(event):
+        canvas.yview_scroll(int(-1 * (event.delta / 120)), "units")
+    canvas.bind_all("<MouseWheel>", on_mousewheel)
 
-# Table frame
-table_frame = Frame(content_frame, bg="#0d1b4c")
-table_frame.pack(pady=20, padx=20)
+    # ── Back button ────────────────────────────────────────────────
+    back_frame = Frame(content_frame, bg="#a6093d", relief="raised", bd=2)
+    back_frame.pack(anchor="w", padx=20, pady=(15, 0))
+    back_icon = Label(back_frame, text="←", font=("Arial", 16), bg="#a6093d", fg="white")
+    back_icon.pack(side=LEFT, padx=5)
+    back_text = Label(back_frame, text="Back to Home", font=("Arial", 12), bg="#a6093d", fg="white")
+    back_text.pack(side=LEFT, padx=(0, 5))
 
-# Create table headers
-headers = ["User ID", "Username", "Role", "Delete"]
-for i, header in enumerate(headers):
-    Label(table_frame, text=header, bg="#0d1b4c", fg="white", 
-          font=("Arial", 12, "bold"), width=20, relief="ridge").grid(row=0, column=i, padx=2, pady=2)
+    def on_back_click(e): open_page(root, "home_page")
+    def on_back_enter(e):
+        for w in (back_frame, back_icon, back_text): w.config(bg="#4fe4ee")
+    def on_back_leave(e):
+        for w in (back_frame, back_icon, back_text): w.config(bg="#a6093d")
+    for widget in (back_frame, back_icon, back_text):
+        widget.bind("<Button-1>", on_back_click)
+        widget.bind("<Enter>",    on_back_enter)
+        widget.bind("<Leave>",    on_back_leave)
 
-# icon button
-def create_icon_button(parent, text, icon, color, command, row, col):
-    btn_frame = Frame(parent, bg="white", relief="raised", bd=2)
-    btn_frame.grid(row=row, column=col, padx=5, pady=5, sticky="nsew")
-    
-    icon_label = Label(btn_frame, text=icon, font=("Arial", 14), 
-                       bg="white", fg=color)
-    icon_label.pack(side=LEFT, padx=5)
-    
-    text_label = Label(btn_frame, text=text, font=("Arial", 12), 
-                       bg="white", fg="black")
-    text_label.pack(side=LEFT, padx=(0, 5))
-    
-    def on_click(e):
-        command()
-    
-    btn_frame.bind("<Button-1>", on_click)
-    icon_label.bind("<Button-1>", on_click)
-    text_label.bind("<Button-1>", on_click)
-    
-    def on_enter(e):
-        btn_frame.config(bg="lightblue")
-        icon_label.config(bg="lightblue")
-        text_label.config(bg="lightblue")
-    
-    def on_leave(e):
-        btn_frame.config(bg="white")
-        icon_label.config(bg="white")
-        text_label.config(bg="white")
-    
-    btn_frame.bind("<Enter>", on_enter)
-    btn_frame.bind("<Leave>", on_leave)
-    icon_label.bind("<Enter>", on_enter)
-    icon_label.bind("<Leave>", on_leave)
-    text_label.bind("<Enter>", on_enter)
-    text_label.bind("<Leave>", on_leave)
-    
-    return btn_frame
+    # ── Title ──────────────────────────────────────────────────────
+    title_frame = Frame(content_frame, bg="#5D48B8")
+    title_frame.pack(pady=30)
+    Label(title_frame, text="👥", font=("Arial", 40), bg="#5D48B8", fg="white").pack(side=LEFT, padx=10)
+    Label(title_frame, text="Registered Users", bg="#5D48B8", fg="white",
+          font=("Arial", 24, "bold")).pack(side=LEFT)
 
-# load and display users
-def load_users():
-    # Clear existing rows except headers
-    for widget in table_frame.grid_slaves():
-        if int(widget.grid_info()["row"]) > 0:
-            widget.destroy()
-    
-    users = get_all_users()
-    if not users:
-        Label(table_frame, text="No users found", bg="#0d1b4c", fg="white", 
-              font=("Arial", 12), width=80).grid(row=1, column=0, columnspan=4, pady=10)
-        return
-        
-    for idx, user in enumerate(users, start=1):
-        row_color = "#1a237e" if idx % 2 == 0 else "#283593"
-        
-        # User ID
-        Label(table_frame, text=user['user_id'], bg=row_color, fg="white", 
-              font=("Arial", 11), width=20, relief="ridge").grid(row=idx, column=0, padx=2, pady=2)
-        
-        # Username
-        Label(table_frame, text=user['username'], bg=row_color, fg="white", 
-              font=("Arial", 11), width=20, relief="ridge").grid(row=idx, column=1, padx=2, pady=2)
-        
-        # Role with color coding
-        role_text = user['role']
-        role_color = "#FF6347" if role_text == "admin" else "#32CD32"  # Red for admin, Green for user
-        Label(table_frame, text=role_text.title(), bg=row_color, fg=role_color, 
-              font=("Arial", 11, "bold"), width=20, relief="ridge").grid(row=idx, column=2, padx=2, pady=2)
-        
-        # Delete button for non-admin users only
-        if user['role'] != 'admin':
-            def delete_user(user_id=user['user_id'], username=user['username']):
-                # Show confirmation dialog
-                confirm = messagebox.askyesno("Confirm Delete", 
-                    f"Are you sure you want to delete user:\n\n"
-                    f"Username: {username}\n"
-                    f"User ID: {user_id}\n\n"
-                    "This action cannot be undone!")
-                
-                if confirm:
-                    success, message = delete_user_from_db(user_id)
-                    if success:
-                        messagebox.showinfo("Success", message)
-                        load_users()  # Refresh the list
-                    else:
-                        messagebox.showerror("Error", message)
-            
-            create_icon_button(table_frame, "Delete", "🗑️", "#F44336", delete_user, idx, 3)
+    # ── Table ──────────────────────────────────────────────────────
+    table_frame = Frame(content_frame, bg="#0d1b4c")
+    table_frame.pack(pady=20, padx=20)
+
+    for i, h in enumerate(["User ID", "Username", "Role", "Delete"]):
+        Label(table_frame, text=h, bg="#0d1b4c", fg="white",
+              font=("Arial", 12, "bold"), width=20, relief="ridge").grid(
+            row=0, column=i, padx=2, pady=2)
+
+    # ── Single reusable icon button (grid version) ─────────────────
+    # ✅ Removed the duplicate create_top_icon_button function
+    def create_icon_button(parent, text, icon, color, command, row=None, col=None, use_pack=False):
+        bf = Frame(parent, bg="white", relief="raised", bd=2)
+        if use_pack:
+            bf.pack(side=LEFT, padx=10)
         else:
-            # Show message for admin users
-            admin_label = Label(table_frame, text="Cannot Delete Admin", bg=row_color, fg="#FF6347", 
-                                font=("Arial", 10, "italic"), width=20, relief="ridge")
-            admin_label.grid(row=idx, column=3, padx=2, pady=2)
-            
-            
-            def on_admin_enter(e, label=admin_label, bg=row_color):
-                label.config(bg="#FFCCCB", fg="#E04141")
-            
-            def on_admin_leave(e, label=admin_label, bg=row_color, fg="#FF6347"):
-                label.config(bg=bg, fg=fg)
-            
-            admin_label.bind("<Enter>", on_admin_enter)
-            admin_label.bind("<Leave>", on_admin_leave)
+            bf.grid(row=row, column=col, padx=5, pady=5, sticky="nsew")
+        il = Label(bf, text=icon, font=("Arial", 14 if not use_pack else 20), bg="white", fg=color)
+        il.pack(side=LEFT, padx=5 if not use_pack else 10)
+        tl = Label(bf, text=text, font=("Arial", 12 if not use_pack else 14, "bold"), bg="white", fg="black")
+        tl.pack(side=LEFT, padx=(0, 5 if not use_pack else 10))
+        def on_click(e): command()
+        def on_enter(e):
+            bf.config(bg="lightblue"); il.config(bg="lightblue"); tl.config(bg="lightblue")
+        def on_leave(e):
+            bf.config(bg="white"); il.config(bg="white"); tl.config(bg="white")
+        for w in (bf, il, tl):
+            w.bind("<Button-1>", on_click)
+            w.bind("<Enter>",    on_enter)
+            w.bind("<Leave>",    on_leave)
+        return bf
 
-# Load users 
-load_users()
+    def load_users():
+        for widget in table_frame.grid_slaves():
+            if int(widget.grid_info()["row"]) > 0:
+                widget.destroy()
+        users = get_all_users()
+        if not users:
+            Label(table_frame, text="No users found", bg="#0d1b4c", fg="white",
+                  font=("Arial", 12), width=80).grid(row=1, column=0, columnspan=4, pady=10)
+            return
+        for idx, user in enumerate(users, start=1):
+            row_color = "#1a237e" if idx % 2 == 0 else "#283593"
+            Label(table_frame, text=user['user_id'],  bg=row_color, fg="white",
+                  font=("Arial", 11), width=20, relief="ridge").grid(row=idx, column=0, padx=2, pady=2)
+            Label(table_frame, text=user['username'], bg=row_color, fg="white",
+                  font=("Arial", 11), width=20, relief="ridge").grid(row=idx, column=1, padx=2, pady=2)
+            role_color = "#FF6347" if user['role'] == "admin" else "#32CD32"
+            Label(table_frame, text=user['role'].title(), bg=row_color, fg=role_color,
+                  font=("Arial", 11, "bold"), width=20, relief="ridge").grid(row=idx, column=2, padx=2, pady=2)
+            if user['role'] != 'admin':
+                def delete_user(uid=user['user_id'], uname=user['username']):
+                    if messagebox.askyesno("Confirm Delete",
+                                           f"Delete user:\nUsername: {uname}\nUser ID: {uid}\n\nCannot be undone!"):
+                        success, msg = delete_user_from_db(uid)
+                        if success: messagebox.showinfo("Success", msg); load_users()
+                        else:       messagebox.showerror("Error", msg)
+                create_icon_button(table_frame, "Delete", "🗑️", "#F44336", delete_user, idx, 3)
+            else:
+                admin_lbl = Label(table_frame, text="Cannot Delete Admin", bg=row_color,
+                                  fg="#FF6347", font=("Arial", 10, "italic"), width=20, relief="ridge")
+                admin_lbl.grid(row=idx, column=3, padx=2, pady=2)
+                admin_lbl.bind("<Enter>", lambda e, l=admin_lbl: l.config(bg="#FFCCCB", fg="#E04141"))
+                admin_lbl.bind("<Leave>", lambda e, l=admin_lbl, bg=row_color: l.config(bg=bg, fg="#FF6347"))
 
-# Refresh button 
-def create_top_icon_button(parent, text, icon, color, command):
-    btn_frame = Frame(parent, bg="white", relief="raised", bd=2)
-    btn_frame.pack(side=LEFT, padx=10)
-    
-    icon_label = Label(btn_frame, text=icon, font=("Arial", 20), 
-                       bg="white", fg=color)
-    icon_label.pack(side=LEFT, padx=10)
-    
-    text_label = Label(btn_frame, text=text, font=("Arial", 14, "bold"), 
-                       bg="white", fg="black")
-    text_label.pack(side=LEFT, padx=(0, 10))
-    
-    def on_click(e):
-        command()
-    
-    btn_frame.bind("<Button-1>", on_click)
-    icon_label.bind("<Button-1>", on_click)
-    text_label.bind("<Button-1>", on_click)
-    
-    def on_enter(e):
-        btn_frame.config(bg="lightblue")
-        icon_label.config(bg="lightblue")
-        text_label.config(bg="lightblue")
-    
-    def on_leave(e):
-        btn_frame.config(bg="white")
-        icon_label.config(bg="white")
-        text_label.config(bg="white")
-    
-    btn_frame.bind("<Enter>", on_enter)
-    btn_frame.bind("<Leave>", on_leave)
-    icon_label.bind("<Enter>", on_enter)
-    icon_label.bind("<Leave>", on_leave)
-    text_label.bind("<Enter>", on_enter)
-    text_label.bind("<Leave>", on_leave)
-    
-    return btn_frame
+    load_users()
 
-# Button frame for refresh
-button_frame = Frame(content_frame, bg="#5D48B8")
-button_frame.pack(pady=10)
+    # ── Refresh button ─────────────────────────────────────────────
+    button_frame = Frame(content_frame, bg="#5D48B8")
+    button_frame.pack(pady=10)
+    create_icon_button(button_frame, "Refresh List", "🔄", "#4CAF50", load_users, use_pack=True)
 
-refresh_btn = create_top_icon_button(button_frame, "Refresh List", "🔄", "#4CAF50", load_users)
+    # ── Instructions ──────────────────────────────────────────────
+    instructions_frame = Frame(content_frame, bg="#5D48B8")
+    instructions_frame.pack(pady=20)
+    Label(instructions_frame,
+          text="Instructions:\n"
+               "1. View all registered users in the table above\n"
+               "2. Regular users can be deleted by clicking 'Delete'\n"
+               "3. Admin accounts cannot be deleted (security)\n"
+               "4. Click 'Refresh List' to update\n"
+               "5. Role colors: Red = Admin, Green = User",
+          bg="#5D48B8", fg="white", font=("Arial", 10), justify=LEFT).pack()
 
-# Instructions
-instructions_frame = Frame(content_frame, bg="#5D48B8")
-instructions_frame.pack(pady=20)
+    root.mainloop()
 
-instructions_text = """Instructions:
-1. View all registered users in the table above
-2. Regular users can be deleted by clicking the 'Delete' button
-3. Admin accounts cannot be deleted (for security reasons)
-4. Click 'Refresh List' to update the user list
-5. Role colors: Red = Admin, Green = User"""
 
-instructions_label = Label(instructions_frame, text=instructions_text, 
-                          bg="#5D48B8", fg="white", font=("Arial", 10), 
-                          justify=LEFT)
-instructions_label.pack()
-
-# Add mouse wheel scrolling
-def on_mousewheel(event):
-    canvas.yview_scroll(int(-1*(event.delta/120)), "units")
-
-canvas.bind_all("<MouseWheel>", on_mousewheel)
-
-root.mainloop()
+if __name__ == "__main__":
+    run()
