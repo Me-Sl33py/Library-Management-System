@@ -1,175 +1,87 @@
 from tkinter import *
 import tkinter.messagebox as messagebox
-from function_header_body import header_part, body_part
+from function_header_body import header_part, body_part, make_back_btn, icon_btn
 from database_operations import add_book_to_db, update_book_in_db
 
 
-def open_page(root, module_name):
-    root.destroy()
-    import importlib
-    importlib.import_module(module_name).run()
+class AddUpdatePage(Frame):
+    def __init__(self, parent, controller, username="Guest"):
+        super().__init__(parent)
+        header_part(self, username=username,
+                    on_profile_click=lambda: controller.show_frame("ProfilePage"))
+        body = body_part(self)
 
+        main = Frame(body, bg="#5D48B8"); main.pack(fill=BOTH, expand=True)
+        canvas = Canvas(main, bg="#5D48B8", highlightthickness=0)
+        canvas.pack(side=LEFT, fill=BOTH, expand=True)
+        sb = Scrollbar(main, orient=VERTICAL, command=canvas.yview); sb.pack(side=RIGHT, fill=Y)
+        canvas.configure(yscrollcommand=sb.set)
+        cf = Frame(canvas, bg="#5D48B8")
+        cw = canvas.create_window((0, 0), window=cf, anchor="nw")
+        cf.bind("<Configure>", lambda e: canvas.configure(scrollregion=canvas.bbox("all")))
+        canvas.bind("<Configure>", lambda e: canvas.itemconfig(cw, width=e.width))
+        canvas.bind_all("<MouseWheel>", lambda e: canvas.yview_scroll(int(-1*(e.delta/120)), "units"))
 
-def run():
-    root = Tk()
-    root.title("Library Management System - Add/Update Book")
-    root.geometry("1220x900")
-    root.iconbitmap("logo_icon.ico")
+        make_back_btn(cf, controller)
 
-    header = header_part(root)
-    body   = body_part(root)
+        # Title
+        tf = Frame(cf, bg="#5D48B8"); tf.pack(pady=30)
+        Label(tf, text="📖", font=("Arial", 40), bg="#5D48B8", fg="white").pack(side=LEFT, padx=10)
+        Label(tf, text="Add / Update Book", font=("Arial", 24, "bold"),
+              bg="#5D48B8", fg="white").pack(side=LEFT)
 
-    # ── Scrollable setup ───────────────────────────────────────────
-    container = Frame(body, bg="#5D48B8")
-    container.place(relx=0.5, rely=0.5, anchor=CENTER)
+        # Centred form card
+        card = Frame(cf, bg="#3d2e8a", relief="groove", bd=2)
+        card.pack(pady=10, padx=80, fill=X)
 
-    canvas = Canvas(container, bg="#5D48B8", width=850, height=500)
-    canvas.pack(side=LEFT, fill=BOTH, expand=True)
+        ff = Frame(card, bg="#3d2e8a"); ff.pack(pady=20, padx=40)
 
-    scrollbar = Scrollbar(container, orient=VERTICAL, command=canvas.yview)
-    scrollbar.pack(side=RIGHT, fill=Y)
-    canvas.configure(yscrollcommand=scrollbar.set)
+        def row(icon, lbl, r):
+            lf = Frame(ff, bg="#3d2e8a"); lf.grid(row=r, column=0, padx=10, pady=12, sticky=W)
+            Label(lf, text=icon, font=("Arial", 16), bg="#3d2e8a", fg="white").pack(side=LEFT, padx=(0,8))
+            Label(lf, text=lbl, font=("Arial", 13), bg="#3d2e8a", fg="white").pack(side=LEFT)
+            e = Entry(ff, font=("Arial", 13), width=38, bg="#e6e6e6")
+            e.grid(row=r, column=1, padx=20, pady=12)
+            return e
 
-    content_frame = Frame(canvas, bg="#5D48B8")
-    canvas.create_window((0, 0), window=content_frame, anchor="nw")
+        e_id = row("🆔", "Book ID (update only):", 0)
+        e_nm = row("📕", "Book Name:",             1)
+        e_au = row("✍️",  "Author:",               2)
+        e_yr = row("📅", "Published Year:",        3)
+        e_qt = row("🔢", "Quantity:",              4)
 
-    def update_scrollregion(event=None):
-        canvas.configure(scrollregion=canvas.bbox("all"))
-    content_frame.bind("<Configure>", update_scrollregion)
+        def clear():
+            for e in (e_id, e_nm, e_au, e_yr, e_qt): e.delete(0, END)
 
-    def on_mousewheel(event):
-        canvas.yview_scroll(int(-1 * (event.delta / 120)), "units")
-    canvas.bind_all("<MouseWheel>", on_mousewheel)
+        def add():
+            nm, au, yr, qt = e_nm.get().strip(), e_au.get().strip(), e_yr.get().strip(), e_qt.get().strip()
+            if not all([nm, au, yr, qt]): messagebox.showerror("Error","All fields except ID required!"); return
+            try:
+                y, q = int(yr), int(qt)
+                if y < 0: messagebox.showerror("Error","Year must be positive"); return
+                if q <= 0: messagebox.showerror("Error","Quantity must be > 0"); return
+                if add_book_to_db(nm, au, y, q): messagebox.showinfo("Success","Book added!"); clear()
+                else: messagebox.showerror("Error","Failed to add book")
+            except ValueError: messagebox.showerror("Error","Year and Quantity must be numbers")
 
-    # ── Back button ────────────────────────────────────────────────
-    # ✅ Inside content_frame using pack — fixes place vs pack conflict
-    back_frame = Frame(content_frame, bg="#a6093d", relief="raised", bd=2)
-    back_frame.pack(anchor="w", padx=20, pady=(15, 0))
+        def update():
+            bid, nm, au, yr, qt = (e_id.get().strip(), e_nm.get().strip(),
+                e_au.get().strip(), e_yr.get().strip(), e_qt.get().strip())
+            if not bid: messagebox.showerror("Error","Book ID required for update!"); return
+            if not all([nm, au, yr, qt]): messagebox.showerror("Error","All fields required!"); return
+            try:
+                b, y, q = int(bid), int(yr), int(qt)
+                if messagebox.askyesno("Confirm", f"Update Book ID {b}?"):
+                    ok, msg = update_book_in_db(b, nm, au, y, q)
+                    if ok: messagebox.showinfo("Success", msg); clear()
+                    else:  messagebox.showerror("Error", msg)
+            except ValueError: messagebox.showerror("Error","ID/Year/Quantity must be numbers")
 
-    back_icon = Label(back_frame, text="←", font=("Arial", 16), bg="#a6093d", fg="white")
-    back_icon.pack(side=LEFT, padx=5)
-    back_text = Label(back_frame, text="Back to Home", font=("Arial", 12), bg="#a6093d", fg="white")
-    back_text.pack(side=LEFT, padx=(0, 5))
+        bf = Frame(card, bg="#3d2e8a"); bf.pack(pady=(5, 25))
+        icon_btn(bf, "Add Book",    "➕", "#4CAF50", add)
+        icon_btn(bf, "Update Book", "✏️", "#2196F3", update)
+        icon_btn(bf, "Clear Form",  "🗑️", "#FF9800", clear)
 
-    def on_back_click(e): open_page(root, "home_page")
-    def on_back_enter(e):
-        for w in (back_frame, back_icon, back_text): w.config(bg="#4fe4ee")
-    def on_back_leave(e):
-        for w in (back_frame, back_icon, back_text): w.config(bg="#a6093d")
-
-    for widget in (back_frame, back_icon, back_text):
-        widget.bind("<Button-1>", on_back_click)
-        widget.bind("<Enter>",    on_back_enter)
-        widget.bind("<Leave>",    on_back_leave)
-
-    # ── Title ──────────────────────────────────────────────────────
-    title_frame = Frame(content_frame, bg="#5D48B8")
-    title_frame.pack(pady=30)
-    Label(title_frame, text="📖", font=("Arial", 40), bg="#5D48B8", fg="white").pack(side=LEFT, padx=10)
-    Label(title_frame, text="Add / Update Book", bg="#5D48B8", fg="white",
-          font=("Arial", 24, "bold")).pack(side=LEFT)
-
-    # ── Form ───────────────────────────────────────────────────────
-    form_frame = Frame(content_frame, bg="#5D48B8")
-    form_frame.pack(pady=20)
-
-    def create_form_row(icon, label_text, row):
-        lf = Frame(form_frame, bg="#5D48B8")
-        lf.grid(row=row, column=0, padx=20, pady=15, sticky="w")
-        Label(lf, text=icon, font=("Arial", 16), bg="#5D48B8", fg="white").pack(side=LEFT, padx=(0, 10))
-        Label(lf, text=label_text, bg="#5D48B8", fg="white", font=("Arial", 14)).pack(side=LEFT)
-        entry = Entry(form_frame, font=("Arial", 14), width=40)
-        entry.grid(row=row, column=1, padx=20, pady=15)
-        return entry
-
-    book_id_entry   = create_form_row("🆔", "Book ID (for update only):", 0)
-    book_name_entry = create_form_row("📕", "Book Name:",                 1)
-    author_entry    = create_form_row("✍️",  "Author:",                   2)
-    year_entry      = create_form_row("📅", "Published Year:",            3)
-    quantity_entry  = create_form_row("🔢", "Quantity:",                  4)
-
-    # ── Helpers ────────────────────────────────────────────────────
-    def clear_form():
-        for e in (book_id_entry, book_name_entry, author_entry, year_entry, quantity_entry):
-            e.delete(0, END)
-
-    def add_book():
-        name     = book_name_entry.get().strip()
-        author   = author_entry.get().strip()
-        year     = year_entry.get().strip()
-        quantity = quantity_entry.get().strip()
-        if not all([name, author, year, quantity]):
-            messagebox.showerror("Error", "All fields except Book ID are required!"); return
-        try:
-            y, q = int(year), int(quantity)
-            if y < 0:   messagebox.showerror("Error", "Year must be positive!"); return
-            if q <= 0:  messagebox.showerror("Error", "Quantity must be > 0!"); return
-            if add_book_to_db(name, author, y, q):
-                messagebox.showinfo("Success", "Book added successfully!"); clear_form()
-            else:
-                messagebox.showerror("Error", "Failed to add book!")
-        except ValueError:
-            messagebox.showerror("Error", "Year and Quantity must be numbers!")
-
-    def update_book():
-        book_id  = book_id_entry.get().strip()
-        name     = book_name_entry.get().strip()
-        author   = author_entry.get().strip()
-        year     = year_entry.get().strip()
-        quantity = quantity_entry.get().strip()
-        if not book_id:
-            messagebox.showerror("Error", "Book ID required for update!"); return
-        if not all([name, author, year, quantity]):
-            messagebox.showerror("Error", "All fields are required!"); return
-        try:
-            bid, y, q = int(book_id), int(year), int(quantity)
-            if y < 0:  messagebox.showerror("Error", "Year must be positive!"); return
-            if q < 0:  messagebox.showerror("Error", "Quantity must be >= 0!"); return
-            if messagebox.askyesno("Confirm", f"Update Book ID {bid}?"):
-                success, msg = update_book_in_db(bid, name, author, y, q)
-                if success: messagebox.showinfo("Success", msg); clear_form()
-                else:       messagebox.showerror("Error", msg)
-        except ValueError:
-            messagebox.showerror("Error", "Book ID, Year and Quantity must be numbers!")
-
-    # ── Buttons ────────────────────────────────────────────────────
-    def create_icon_button(parent, text, icon, color, command):
-        bf = Frame(parent, bg="white", relief="raised", bd=2)
-        bf.pack(side=LEFT, padx=10)
-        il = Label(bf, text=icon, font=("Arial", 20), bg="white", fg=color)
-        il.pack(side=LEFT, padx=10)
-        tl = Label(bf, text=text, font=("Arial", 14, "bold"), bg="white", fg="black")
-        tl.pack(side=LEFT, padx=(0, 10))
-        def on_click(e): command()
-        def on_enter(e):
-            bf.config(bg="lightblue"); il.config(bg="lightblue"); tl.config(bg="lightblue")
-        def on_leave(e):
-            bf.config(bg="white"); il.config(bg="white"); tl.config(bg="white")
-        for w in (bf, il, tl):
-            w.bind("<Button-1>", on_click)
-            w.bind("<Enter>",    on_enter)
-            w.bind("<Leave>",    on_leave)
-        return bf
-
-    button_frame = Frame(content_frame, bg="#5D48B8")
-    button_frame.pack(pady=30)
-    create_icon_button(button_frame, "Add Book",    "➕", "#4CAF50", add_book)
-    create_icon_button(button_frame, "Update Book", "✏️", "#2196F3", update_book)
-    create_icon_button(button_frame, "Clear Form",  "🗑️", "#FF9800", clear_form)
-
-    # ── Instructions ──────────────────────────────────────────────
-    instructions_frame = Frame(content_frame, bg="#5D48B8")
-    instructions_frame.pack(pady=20)
-    Label(instructions_frame,
-          text="Instructions:\n"
-               "• To ADD: Leave Book ID empty, fill other fields, click 'Add Book'\n"
-               "• To UPDATE: Enter Book ID, fill all fields, click 'Update Book'\n"
-               "• To CLEAR: Click 'Clear Form'",
-          bg="#5D48B8", fg="white", font=("Arial", 10), justify=LEFT).pack()
-
-    book_name_entry.focus_set()
-    root.mainloop()
-
-
-if __name__ == "__main__":
-    run()
+        Label(cf, text="• ADD: leave Book ID blank   • UPDATE: fill Book ID",
+              bg="#5D48B8", fg="white", font=("Arial", 10)).pack(pady=10)
+        e_nm.focus_set()

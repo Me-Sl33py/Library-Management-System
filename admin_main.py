@@ -1,143 +1,61 @@
-import tkinter as tk
-from tkinter import ttk
-from PIL import Image, ImageTk  # pip install pillow
-import os
+from tkinter import *
+import tkinter.messagebox as messagebox
+
+from home_page        import HomePage
+from add_update       import AddUpdatePage
+from delete_books     import DeleteBooksPage
+from available_books  import AvailableBooksPage
+from registered_user  import RegisteredUserPage
+from records          import RecordsPage
+from history          import HistoryPage
+from profile_page     import ProfilePage
 
 
-class AdminApp(tk.Tk):
-    def __init__(self):
+class AdminMain(Tk):
+    def __init__(self, username="Guest"):
         super().__init__()
+        self.username = username
+        self.title("Library Management — Admin")
+        self.geometry("1220x900")
+        self.state("zoomed")
+        self.iconbitmap("logo_icon.ico")
+        self.resizable(True, True)
 
-        #   Window setup                        
-        self.title("Admin Panel")
-        self.geometry("500x400")
-        self.configure(bg="#1e1e2e")
-        self.resizable(False, False)
+        container = Frame(self)
+        container.pack(fill="both", expand=True)
+        container.grid_rowconfigure(0, weight=1)
+        container.grid_columnconfigure(0, weight=1)
 
-        #   Store image references HERE so they are never garbage-collected  
-     
-        self.icons = {}
-
-        self._build_ui()
-
-    #                                  
-    def _load_icon(self, name: str, path: str, size=(40, 40)) -> ImageTk.PhotoImage | None:
-        """
-        Load an icon from disk and keep a reference inside self.icons.
-        Returns None if the file doesn't exist (shows text-only button instead).
-        """
-        if not os.path.exists(path):
-            print(f"[warn] icon not found: {path}")
-            return None
-
-        img = Image.open(path).resize(size, Image.LANCZOS)
-        photo = ImageTk.PhotoImage(img)
-        self.icons[name] = photo   # ← KEY: store reference to prevent GC
-        return photo
-   # This is the most common cause of "all icons look the same" bug.
-    #                                  
-    def _make_icon_button(self, parent, label: str, icon_name: str,
-                          icon_path: str, command):
-        """
-        Create one icon button.  Always assigns btn.image so Tkinter keeps
-        the reference even if self.icons were to be cleared.
-        """
-        photo = self._load_icon(icon_name, icon_path)
-
-        btn = tk.Button(
-            parent,
-            text=label,
-            image=photo,          # may be None → shows text only
-            compound=tk.TOP,      # icon above text
-            command=command,
-            bg="#313244",
-            fg="#cdd6f4",
-            activebackground="#45475a",
-            activeforeground="#ffffff",
-            relief=tk.FLAT,
-            cursor="hand2",
-            width=110,
-            height=110,
-            font=("Segoe UI", 10, "bold"),
-            bd=0,
-            padx=8,
-            pady=8,
-        )
-
-        # ← SECOND safety net: attach reference directly to the widget
-        btn.image = photo
-
-        return btn
-
-    #                                  
-    def _build_ui(self):
-        #   Header                           
-        header = tk.Label(
-            self,
-            text="🛠  Admin Panel",
-            bg="#1e1e2e",
-            fg="#cba6f7",
-            font=("Segoe UI", 18, "bold"),
-            pady=16,
-        )
-        header.pack(fill=tk.X)
-
-        #   Icon frame                         
-        frame = tk.Frame(self, bg="#1e1e2e", pady=20)
-        frame.pack()
-
-        #   Button definitions                     
-        # Each entry: (label, icon_name_key, icon_file_path, callback)
-        # Replace the icon paths with your own .png/.ico files.
-        buttons_cfg = [
-            (
-                "Users",
-                "users",
-                "icons/users.png",        # ← put your icon here
-                lambda: self._on_click("Users"),
-            ),
-            (
-                "Reports",
-                "reports",
-                "icons/reports.png",      # ← different icon
-                lambda: self._on_click("Reports"),
-            ),
-            (
-                "Settings",
-                "settings",
-                "icons/settings.png",     # ← different icon
-                lambda: self._on_click("Settings"),
-            ),
+        self.frames = {}
+        pages = [
+            ("HomePage",           HomePage,           {}),
+            ("AddUpdatePage",      AddUpdatePage,      {}),
+            ("DeleteBooksPage",    DeleteBooksPage,    {}),
+            ("AvailableBooksPage", AvailableBooksPage, {}),
+            ("RegisteredUserPage", RegisteredUserPage, {}),
+            ("RecordsPage",        RecordsPage,        {}),
+            ("HistoryPage",        HistoryPage,        {}),
+            ("ProfilePage",        ProfilePage,        {}),
         ]
+        for name, PageClass, kwargs in pages:
+            frame = PageClass(container, self, username=username, **kwargs)
+            self.frames[name] = frame
+            frame.grid(row=0, column=0, sticky="nsew")
 
-        #   Create buttons in a loop — note each btn.image is set individually  
-        for col, (label, icon_name, icon_path, cmd) in enumerate(buttons_cfg):
-            btn = self._make_icon_button(
-                frame, label, icon_name, icon_path, cmd
-            )
-            btn.grid(row=0, column=col, padx=15, pady=10)
+        self.show_frame("HomePage")
 
-        #   Status bar                         
-        self.status_var = tk.StringVar(value="Select an action above.")
-        status = tk.Label(
-            self,
-            textvariable=self.status_var,
-            bg="#181825",
-            fg="#a6adc8",
-            font=("Segoe UI", 10),
-            anchor=tk.W,
-            padx=12,
-            pady=6,
-        )
-        status.pack(side=tk.BOTTOM, fill=tk.X)
+    def show_frame(self, name):
+        frame = self.frames.get(name)
+        if frame:
+            frame.tkraise()
 
-    #                                  
-    def _on_click(self, section: str):
-        self.status_var.set(f"✔  Opened: {section}")
-        print(f"Button clicked → {section}")
+    def sign_out(self):
+        if messagebox.askyesno("Sign Out", "Are you sure you want to sign out?"):
+            self.destroy()
+            import library_login
+            library_login.run()
 
 
-#   Entry point                             
 if __name__ == "__main__":
-    app = AdminApp()
+    app = AdminMain("Manish")
     app.mainloop()

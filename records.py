@@ -1,187 +1,124 @@
 from tkinter import *
 from tkinter import ttk
 import tkinter.messagebox as messagebox
-from function_header_body import header_part, body_part
+from function_header_body import header_part, body_part, make_back_btn
 from database_operations import add_issue_record, return_book, get_active_issues
 
 
-def open_page(root, module_name):
-    root.destroy()
-    import importlib
-    importlib.import_module(module_name).run()
+class RecordsPage(Frame):
+    def __init__(self, parent, controller, username="Guest"):
+        super().__init__(parent)
+        header_part(self, username=username,
+                    on_profile_click=lambda: controller.show_frame("ProfilePage"))
+        body = body_part(self)
 
+        main = Frame(body, bg="#5D48B8"); main.pack(fill=BOTH, expand=True)
+        canvas = Canvas(main, bg="#5D48B8", highlightthickness=0)
+        canvas.pack(side=LEFT, fill=BOTH, expand=True)
+        sb = Scrollbar(main, orient=VERTICAL, command=canvas.yview); sb.pack(side=RIGHT, fill=Y)
+        canvas.configure(yscrollcommand=sb.set)
+        cf = Frame(canvas, bg="#0d1b4c")
+        cw = canvas.create_window((0,0), window=cf, anchor="nw")
+        cf.bind("<Configure>", lambda e: canvas.configure(scrollregion=canvas.bbox("all")))
+        canvas.bind("<Configure>", lambda e: canvas.itemconfig(cw, width=e.width))
 
-def run():
-    root = Tk()
-    root.title("Library Management System - Book Records")
-    root.geometry("1220x900")
-    root.iconbitmap("logo_icon.ico")
+        def _scroll(e): canvas.yview_scroll(int(-1*(e.delta/120)), "units")
+        def _bind(e):   canvas.bind_all("<MouseWheel>", _scroll)
+        def _unbind(e): canvas.unbind_all("<MouseWheel>")
+        canvas.bind("<Enter>", _bind)
+        canvas.bind("<Leave>", _unbind)
+        cf.bind("<Enter>", _bind)
+        cf.bind("<Leave>", _unbind)
 
-    header = header_part(root)
-    body   = body_part(root)
+        make_back_btn(cf, controller)
 
-    main_container = Frame(body, bg="#5D48B8")
-    main_container.pack(fill=BOTH, expand=True)
+        # Title
+        tf = Frame(cf, bg="#5D48B8"); tf.pack(pady=20)
+        Label(tf, text="📊", font=("Arial",40), bg="#5D48B8", fg="white").pack(side=LEFT, padx=10)
+        Label(tf, text="Book Records", font=("Arial",24,"bold"),
+              bg="#5D48B8", fg="white").pack(side=LEFT)
 
-    canvas = Canvas(main_container, bg="#5D48B8", highlightthickness=0)
-    scrollbar = Scrollbar(main_container, orient=VERTICAL, command=canvas.yview)
-    canvas.configure(yscrollcommand=scrollbar.set)
-    canvas.pack(side=LEFT, fill=BOTH, expand=True)
-    scrollbar.pack(side=RIGHT, fill=Y)
+        def section(title):
+            s = Frame(cf, bg="#3d2e8a", relief="groove", bd=2)
+            s.pack(pady=12, padx=30, fill=X)
+            Label(s, text=title, bg="#3d2e8a", fg="white",
+                  font=("Arial",14,"bold")).pack(pady=10)
+            return s
 
-    container = Frame(canvas, bg="#0d1b4c")
-    container_window = canvas.create_window((0, 0), window=container, anchor="nw")
+        def form_row(parent, icon, lbl, row):
+            lf = Frame(parent, bg="#3d2e8a"); lf.grid(row=row, column=0, padx=20, pady=8, sticky=W)
+            Label(lf, text=icon, font=("Arial",14), bg="#3d2e8a", fg="white").pack(side=LEFT, padx=(0,8))
+            Label(lf, text=lbl, font=("Arial",13), bg="#3d2e8a", fg="white").pack(side=LEFT)
+            e = Entry(parent, font=("Arial",13), width=30); e.grid(row=row, column=1, padx=20, pady=8)
+            return e
 
-    def configure_scroll_region(event):
-        canvas.configure(scrollregion=canvas.bbox("all"))
-        canvas.itemconfig(container_window, width=event.width)
-    container.bind("<Configure>", configure_scroll_region)
-    canvas.bind("<Configure>",    configure_scroll_region)
+        # Issue section
+        isf = section("📖  Issue Book")
+        ff = Frame(isf, bg="#3d2e8a"); ff.pack()
+        e_uid = form_row(ff, "👤", "User ID:", 0)
+        e_bid = form_row(ff, "📕", "Book ID:", 1)
 
-    def on_mousewheel(event):
-        canvas.yview_scroll(int(-1 * (event.delta / 120)), "units")
-    canvas.bind_all("<MouseWheel>", on_mousewheel)
+        def do_issue():
+            uid, bid = e_uid.get().strip(), e_bid.get().strip()
+            if not uid or not bid: messagebox.showerror("Error","Enter User ID and Book ID!"); return
+            try:
+                ok, msg = add_issue_record(int(uid), int(bid))
+                if ok: messagebox.showinfo("Success",msg); e_uid.delete(0,END); e_bid.delete(0,END); self.refresh()
+                else:  messagebox.showerror("Error",msg)
+            except ValueError: messagebox.showerror("Error","IDs must be numbers!")
 
-    #   Back button                         
-    # ✅ Inside container using pack — fixes place conflict, removes duplicate
-    back_frame = Frame(container, bg="#a6093d", relief="raised", bd=2)
-    back_frame.pack(anchor="w", padx=20, pady=(15, 0))
-    back_icon = Label(back_frame, text="←", font=("Arial", 16), bg="#a6093d", fg="white")
-    back_icon.pack(side=LEFT, padx=5)
-    back_text = Label(back_frame, text="Back to Home", font=("Arial", 12), bg="#a6093d", fg="white")
-    back_text.pack(side=LEFT, padx=(0, 5))
+        Button(isf, text="📤 Issue Book", font=("Arial",12,"bold"),
+               bg="#4CAF50", fg="white", padx=20, pady=8,
+               cursor="hand2", command=do_issue).pack(pady=10)
 
-    def on_back_click(e): open_page(root, "home_page")
-    def on_back_enter(e):
-        for w in (back_frame, back_icon, back_text): w.config(bg="#4fe4ee")
-    def on_back_leave(e):
-        for w in (back_frame, back_icon, back_text): w.config(bg="#a6093d")
-    for widget in (back_frame, back_icon, back_text):
-        widget.bind("<Button-1>", on_back_click)
-        widget.bind("<Enter>",    on_back_enter)
-        widget.bind("<Leave>",    on_back_leave)
+        # Return section
+        rtf = section("📥  Return Book")
+        rff = Frame(rtf, bg="#3d2e8a"); rff.pack()
+        e_iid = form_row(rff, "🆔", "Issue ID:", 0)
 
-    #   Title                            
-    title_frame = Frame(container, bg="#5D48B8")
-    title_frame.pack(pady=20)
-    Label(title_frame, text="📋", font=("Arial", 40), bg="#5D48B8", fg="white").pack(side=LEFT, padx=10)
-    Label(title_frame, text="Book Records", bg="#5D48B8", fg="white",
-          font=("Arial", 24, "bold")).pack(side=LEFT)
+        def do_return():
+            iid = e_iid.get().strip()
+            if not iid: messagebox.showerror("Error","Enter Issue ID!"); return
+            try:
+                if messagebox.askyesno("Confirm", f"Return Issue ID {iid}?"):
+                    ok, msg = return_book(int(iid))
+                    if ok: messagebox.showinfo("Success",msg); e_iid.delete(0,END); self.refresh()
+                    else:  messagebox.showerror("Error",msg)
+            except ValueError: messagebox.showerror("Error","Issue ID must be a number!")
 
-    #   Helpers                           
-    def create_form_row(parent, icon, label_text, row):
-        lf = Frame(parent, bg="#5D48B8")
-        lf.grid(row=row, column=0, padx=20, pady=15, sticky="w")
-        Label(lf, text=icon, font=("Arial", 16), bg="#5D48B8", fg="white").pack(side=LEFT, padx=(0, 10))
-        Label(lf, text=label_text, bg="#5D48B8", fg="white", font=("Arial", 14)).pack(side=LEFT)
-        entry = Entry(parent, font=("Arial", 14), width=40)
-        entry.grid(row=row, column=1, padx=20, pady=15)
-        return entry
+        Button(rtf, text="📥 Return Book", font=("Arial",12,"bold"),
+               bg="#FF5722", fg="white", padx=20, pady=8,
+               cursor="hand2", command=do_return).pack(pady=10)
 
-    def create_button(parent, text, icon, color, command):
-        return Button(parent, text=f"{icon} {text}", font=("Arial", 12, "bold"),
-                      bg=color, fg="white", padx=20, pady=10, command=command, cursor="hand2")
+        # Active issues
+        aif = section("📊  Currently Issued Books")
+        tree_f = Frame(aif, bg="#3d2e8a"); tree_f.pack(fill=BOTH, expand=True, padx=10, pady=8)
 
-    #   Issue Book                         ─
-    issue_frame = Frame(container, bg="#5D48B8", relief="groove", bd=2)
-    issue_frame.pack(pady=20, padx=20, fill=X)
-    Label(issue_frame, text="📖 Issue Book", bg="#5D48B8", fg="white",
-          font=("Arial", 16, "bold")).pack(pady=10)
-    issue_form_frame = Frame(issue_frame, bg="#5D48B8")
-    issue_form_frame.pack(pady=10)
-    issue_user_entry = create_form_row(issue_form_frame, "👤", "User ID:", 0)
-    issue_book_entry = create_form_row(issue_form_frame, "📕", "Book ID:", 1)
+        self.tree = ttk.Treeview(tree_f,
+            columns=("Issue ID","User","Book Title","Issue Date"),
+            show="headings", height=8)
+        for col, w in [("Issue ID",100),("User",200),("Book Title",300),("Issue Date",150)]:
+            self.tree.heading(col, text=col); self.tree.column(col, width=w, anchor="center")
+        vsb = ttk.Scrollbar(tree_f, orient="vertical", command=self.tree.yview)
+        self.tree.configure(yscrollcommand=vsb.set)
+        self.tree.pack(side=LEFT, fill=BOTH, expand=True); vsb.pack(side=RIGHT, fill=Y)
 
-    def on_issue_click():
-        uid = issue_user_entry.get().strip()
-        bid = issue_book_entry.get().strip()
-        if not uid or not bid:
-            messagebox.showerror("Error", "Please enter both User ID and Book ID!"); return
-        try:
-            success, msg = add_issue_record(int(uid), int(bid))
-            if success:
-                messagebox.showinfo("Success", msg)
-                issue_user_entry.delete(0, END)
-                issue_book_entry.delete(0, END)
-                refresh_issues()
-            else:
-                messagebox.showerror("Error", msg)
-        except ValueError:
-            messagebox.showerror("Error", "User ID and Book ID must be numbers!")
+        s = ttk.Style()
+        s.configure("Treeview", rowheight=26)
+        s.map("Treeview", background=[("selected","#5D48B8")])
 
-    create_button(issue_frame, "Issue Book", "📤", "#4CAF50", on_issue_click).pack(pady=10)
+        Button(aif, text="🔄 Refresh", font=("Arial",12,"bold"),
+               bg="#2196F3", fg="white", padx=20, pady=8,
+               cursor="hand2", command=self.refresh).pack(pady=10)
 
-    #   Return Book                         
-    return_frame = Frame(container, bg="#5D48B8", relief="groove", bd=2)
-    return_frame.pack(pady=20, padx=20, fill=X)
-    Label(return_frame, text="📥 Return Book", bg="#5D48B8", fg="white",
-          font=("Arial", 16, "bold")).pack(pady=10)
-    return_form_frame = Frame(return_frame, bg="#5D48B8")
-    return_form_frame.pack(pady=10)
-    return_issue_entry = create_form_row(return_form_frame, "🆔", "Issue ID:", 0)
+        self.refresh()
 
-    def on_return_click():
-        iid = return_issue_entry.get().strip()
-        if not iid:
-            messagebox.showerror("Error", "Please enter Issue ID!"); return
-        try:
-            iid_int = int(iid)
-            if messagebox.askyesno("Confirm Return", f"Return book for Issue ID {iid_int}?"):
-                success, msg = return_book(iid_int)
-                if success:
-                    messagebox.showinfo("Success", msg)
-                    return_issue_entry.delete(0, END)
-                    refresh_issues()
-                else:
-                    messagebox.showerror("Error", msg)
-        except ValueError:
-            messagebox.showerror("Error", "Issue ID must be a number!")
-
-    create_button(return_frame, "Return Book", "📥", "#FF5722", on_return_click).pack(pady=10)
-
-    #   Active Issues Table                     
-    active_frame = Frame(container, bg="#5D48B8", relief="groove", bd=2)
-    active_frame.pack(pady=20, padx=20, fill=X)
-    Label(active_frame, text="📊 Active Issues", bg="#5D48B8", fg="white",
-          font=("Arial", 16, "bold")).pack(pady=10)
-
-    tree_frame = Frame(active_frame, bg="#5D48B8")
-    tree_frame.pack(pady=10, padx=10, fill=BOTH, expand=True)
-
-    tree = ttk.Treeview(tree_frame,
-                        columns=("Issue ID", "User", "Book Title", "Issue Date"),
-                        show="headings", height=8)
-    for col, w in [("Issue ID", 100), ("User", 200), ("Book Title", 300), ("Issue Date", 150)]:
-        tree.heading(col, text=col)
-        tree.column(col, width=w, anchor="center")
-
-    vsb = ttk.Scrollbar(tree_frame, orient="vertical",   command=tree.yview)
-    hsb = ttk.Scrollbar(tree_frame, orient="horizontal", command=tree.xview)
-    tree.configure(yscrollcommand=vsb.set, xscrollcommand=hsb.set)
-    tree.pack(side=LEFT, fill=BOTH, expand=True)
-    vsb.pack(side=RIGHT,  fill=Y)
-    hsb.pack(side=BOTTOM, fill=X)
-
-    style = ttk.Style()
-    style.configure("Treeview", background="white", foreground="black",
-                    rowheight=25, fieldbackground="white")
-    style.map("Treeview", background=[("selected", "#5D48B8")])
-
-    def refresh_issues():
-        for item in tree.get_children():
-            tree.delete(item)
+    def refresh(self):
+        for item in self.tree.get_children(): self.tree.delete(item)
         issues = get_active_issues()
         if not issues:
-            tree.insert("", "end", values=("No active issues", "", "", ""))
+            self.tree.insert("","end",values=("—","No active issues","",""))
         else:
-            for issue in issues:
-                tree.insert("", "end", values=issue)
-
-    create_button(active_frame, "Refresh List", "🔄", "#2196F3", refresh_issues).pack(pady=10)
-    refresh_issues()
-
-    root.mainloop()
-
-
-if __name__ == "__main__":
-    run()
+            for r in issues:
+                self.tree.insert("","end",
+                    values=(r['issue_id'],r['username'],r['book_name'],r['issue_date']))
