@@ -147,3 +147,146 @@ if __name__ == "__main__":
     # seed_data()
     verify_tables()
     print("\n=== Database Setup Complete ===")
+
+import sqlite3
+from datetime import datetime
+
+def create_connection():
+    return sqlite3.connect("library.db")
+
+def create_tables():
+    conn = create_connection()
+    cursor = conn.cursor()
+
+    cursor.execute("""
+    CREATE TABLE IF NOT EXISTS books (
+        book_id INTEGER PRIMARY KEY AUTOINCREMENT,
+        title TEXT NOT NULL,
+        author TEXT NOT NULL,
+        published_year INTEGER,
+        quantity INTEGER NOT NULL
+    )""")
+
+    cursor.execute("""
+    CREATE TABLE IF NOT EXISTS users (
+        user_id   INTEGER PRIMARY KEY AUTOINCREMENT,
+        username  TEXT NOT NULL UNIQUE,
+        role      TEXT CHECK(role IN ('admin','user')) NOT NULL,
+        password  TEXT NOT NULL
+    )""")
+
+    cursor.execute("""
+    CREATE TABLE IF NOT EXISTS issues (
+        issue_id    INTEGER PRIMARY KEY AUTOINCREMENT,
+        user_id     INTEGER NOT NULL,
+        book_id     INTEGER NOT NULL,
+        issue_date  TEXT NOT NULL,
+        return_date TEXT,
+        status      TEXT CHECK(status IN ('issued','returned')) NOT NULL,
+        FOREIGN KEY (user_id) REFERENCES users(user_id),
+        FOREIGN KEY (book_id) REFERENCES books(book_id)
+    )""")
+
+    conn.commit()
+    conn.close()
+    print("✅ Tables created.")
+
+
+def seed_data():
+    conn = create_connection()
+    cursor = conn.cursor()
+    try:
+        # ── Books ─────────────────────────────────────────────────────
+        cursor.execute("SELECT COUNT(*) FROM books")
+        if cursor.fetchone()[0] == 0:
+            books = [
+                ('Python Basics',       'John Doe',    2020, 5),
+                ('Database Design',     'Jane Smith',  2018, 3),
+                ('Tkinter Guide',       'Alex Ray',    2022, 4),
+                ('Clean Code',          'Robert Martin', 2008, 6),
+                ('Data Structures',     'Mark Allen',  2019, 4),
+            ]
+            cursor.executemany(
+                "INSERT INTO books (title, author, published_year, quantity) VALUES (?,?,?,?)",
+                books
+            )
+            print("✅ Sample books added.")
+        else:
+            print("ℹ️  Books already exist, skipping.")
+
+        # ── Demo Users ────────────────────────────────────────────────
+        # Passwords stored as plain text (consistent with verify_user_credentials)
+        cursor.execute("SELECT COUNT(*) FROM users")
+        if cursor.fetchone()[0] == 0:
+            users = [
+                # (username, role, password)
+                ('Manish',   'admin', 'adminpass'),   # admin demo 1
+                ('Tshering', 'admin', 'adminpass'),   # admin demo 2
+                ('Hilson',   'user',  'userpass1'),   # user demo 1
+                ('Bibek',    'user',  'userpass2'),   # user demo 2
+            ]
+            cursor.executemany(
+                "INSERT INTO users (username, role, password) VALUES (?,?,?)",
+                users
+            )
+            print("✅ Demo accounts added.")
+            print()
+            print("  ┌─────────────────────────────────────────┐")
+            print("  │           DEMO ACCOUNTS                 │")
+            print("  ├───────────┬────────┬────────────────────┤")
+            print("  │ Username  │ Role   │ Password           │")
+            print("  ├───────────┼────────┼────────────────────┤")
+            print("  │ Manish    │ admin  │ adminpass          │")
+            print("  │ Tshering  │ admin  │ adminpass          │")
+            print("  │ Hilson    │ user   │ userpass1          │")
+            print("  │ Bibek     │ user   │ userpass2          │")
+            print("  └───────────┴────────┴────────────────────┘")
+        else:
+            print("ℹ️  Users already exist, skipping.")
+
+        # ── Sample issue record ───────────────────────────────────────
+        cursor.execute("SELECT COUNT(*) FROM issues")
+        if cursor.fetchone()[0] == 0:
+            today = datetime.now().strftime("%Y-%m-%d")
+            cursor.execute("""
+                INSERT INTO issues (user_id, book_id, issue_date, status)
+                VALUES (3, 1, ?, 'issued')
+            """, (today,))
+            cursor.execute("UPDATE books SET quantity = quantity - 1 WHERE book_id = 1")
+            print("✅ Sample issue record added.")
+        else:
+            print("ℹ️  Issues already exist, skipping.")
+
+        conn.commit()
+        print()
+        print("✅ Database ready!")
+
+    except sqlite3.Error as e:
+        print(f"❌ Error: {e}")
+        conn.rollback()
+    finally:
+        conn.close()
+
+
+def verify_tables():
+    conn = create_connection()
+    cursor = conn.cursor()
+    try:
+        for table in ['books', 'users', 'issues']:
+            cursor.execute(
+                "SELECT name FROM sqlite_master WHERE type='table' AND name=?", (table,))
+            status = "✓" if cursor.fetchone() else "✗"
+            print(f"  {status} {table}")
+    finally:
+        conn.close()
+
+
+if __name__ == "__main__":
+    print("Setting up database...")
+    create_tables()
+    seed_data()
+    print()
+    print("Table check:")
+    verify_tables()
+    print()
+    print("=== Setup Complete ===")

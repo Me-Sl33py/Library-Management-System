@@ -8,19 +8,19 @@ class AdminApp(tk.Tk):
     def __init__(self):
         super().__init__()
 
-        # ── Window setup ──────────────────────────────────────────────
+        #   Window setup                        
         self.title("Admin Panel")
         self.geometry("500x400")
         self.configure(bg="#1e1e2e")
         self.resizable(False, False)
 
-        # ── Store image references HERE so they are never garbage-collected ──
-        # This is the most common cause of "all icons look the same" bug.
+        #   Store image references HERE so they are never garbage-collected  
+     
         self.icons = {}
 
         self._build_ui()
 
-    # ─────────────────────────────────────────────────────────────────
+    #                                  
     def _load_icon(self, name: str, path: str, size=(40, 40)) -> ImageTk.PhotoImage | None:
         """
         Load an icon from disk and keep a reference inside self.icons.
@@ -34,8 +34,8 @@ class AdminApp(tk.Tk):
         photo = ImageTk.PhotoImage(img)
         self.icons[name] = photo   # ← KEY: store reference to prevent GC
         return photo
-
-    # ─────────────────────────────────────────────────────────────────
+   # This is the most common cause of "all icons look the same" bug.
+    #                                  
     def _make_icon_button(self, parent, label: str, icon_name: str,
                           icon_path: str, command):
         """
@@ -69,9 +69,9 @@ class AdminApp(tk.Tk):
 
         return btn
 
-    # ─────────────────────────────────────────────────────────────────
+    #                                  
     def _build_ui(self):
-        # ── Header ───────────────────────────────────────────────────
+        #   Header                           
         header = tk.Label(
             self,
             text="🛠  Admin Panel",
@@ -82,11 +82,11 @@ class AdminApp(tk.Tk):
         )
         header.pack(fill=tk.X)
 
-        # ── Icon frame ───────────────────────────────────────────────
+        #   Icon frame                         
         frame = tk.Frame(self, bg="#1e1e2e", pady=20)
         frame.pack()
 
-        # ── Button definitions ────────────────────────────────────────
+        #   Button definitions                     
         # Each entry: (label, icon_name_key, icon_file_path, callback)
         # Replace the icon paths with your own .png/.ico files.
         buttons_cfg = [
@@ -110,14 +110,14 @@ class AdminApp(tk.Tk):
             ),
         ]
 
-        # ── Create buttons in a loop — note each btn.image is set individually ──
+        #   Create buttons in a loop — note each btn.image is set individually  
         for col, (label, icon_name, icon_path, cmd) in enumerate(buttons_cfg):
             btn = self._make_icon_button(
                 frame, label, icon_name, icon_path, cmd
             )
             btn.grid(row=0, column=col, padx=15, pady=10)
 
-        # ── Status bar ───────────────────────────────────────────────
+        #   Status bar                         
         self.status_var = tk.StringVar(value="Select an action above.")
         status = tk.Label(
             self,
@@ -131,13 +131,13 @@ class AdminApp(tk.Tk):
         )
         status.pack(side=tk.BOTTOM, fill=tk.X)
 
-    # ─────────────────────────────────────────────────────────────────
+    #                                  
     def _on_click(self, section: str):
         self.status_var.set(f"✔  Opened: {section}")
         print(f"Button clicked → {section}")
 
 
-# ── Entry point ───────────────────────────────────────────────────────
+#   Entry point                             
 if __name__ == "__main__":
     app = AdminApp()
     app.mainloop()

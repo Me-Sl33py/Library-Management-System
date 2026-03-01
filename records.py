@@ -42,7 +42,7 @@ def run():
         canvas.yview_scroll(int(-1 * (event.delta / 120)), "units")
     canvas.bind_all("<MouseWheel>", on_mousewheel)
 
-    # ── Back button ────────────────────────────────────────────────
+    #   Back button                         
     # ✅ Inside container using pack — fixes place conflict, removes duplicate
     back_frame = Frame(container, bg="#a6093d", relief="raised", bd=2)
     back_frame.pack(anchor="w", padx=20, pady=(15, 0))
@@ -61,14 +61,14 @@ def run():
         widget.bind("<Enter>",    on_back_enter)
         widget.bind("<Leave>",    on_back_leave)
 
-    # ── Title ──────────────────────────────────────────────────────
+    #   Title                            
     title_frame = Frame(container, bg="#5D48B8")
     title_frame.pack(pady=20)
     Label(title_frame, text="📋", font=("Arial", 40), bg="#5D48B8", fg="white").pack(side=LEFT, padx=10)
     Label(title_frame, text="Book Records", bg="#5D48B8", fg="white",
           font=("Arial", 24, "bold")).pack(side=LEFT)
 
-    # ── Helpers ────────────────────────────────────────────────────
+    #   Helpers                           
     def create_form_row(parent, icon, label_text, row):
         lf = Frame(parent, bg="#5D48B8")
         lf.grid(row=row, column=0, padx=20, pady=15, sticky="w")
@@ -82,7 +82,7 @@ def run():
         return Button(parent, text=f"{icon} {text}", font=("Arial", 12, "bold"),
                       bg=color, fg="white", padx=20, pady=10, command=command, cursor="hand2")
 
-    # ── Issue Book ─────────────────────────────────────────────────
+    #   Issue Book                         ─
     issue_frame = Frame(container, bg="#5D48B8", relief="groove", bd=2)
     issue_frame.pack(pady=20, padx=20, fill=X)
     Label(issue_frame, text="📖 Issue Book", bg="#5D48B8", fg="white",
@@ -111,7 +111,7 @@ def run():
 
     create_button(issue_frame, "Issue Book", "📤", "#4CAF50", on_issue_click).pack(pady=10)
 
-    # ── Return Book ────────────────────────────────────────────────
+    #   Return Book                         
     return_frame = Frame(container, bg="#5D48B8", relief="groove", bd=2)
     return_frame.pack(pady=20, padx=20, fill=X)
     Label(return_frame, text="📥 Return Book", bg="#5D48B8", fg="white",
@@ -139,7 +139,7 @@ def run():
 
     create_button(return_frame, "Return Book", "📥", "#FF5722", on_return_click).pack(pady=10)
 
-    # ── Active Issues Table ────────────────────────────────────────
+    #   Active Issues Table                     
     active_frame = Frame(container, bg="#5D48B8", relief="groove", bd=2)
     active_frame.pack(pady=20, padx=20, fill=X)
     Label(active_frame, text="📊 Active Issues", bg="#5D48B8", fg="white",

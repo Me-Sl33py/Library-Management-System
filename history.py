@@ -40,7 +40,7 @@ def run():
         canvas.yview_scroll(int(-1 * (event.delta / 120)), "units")
     canvas.bind_all("<MouseWheel>", on_mousewheel)
 
-    # ── Back button ────────────────────────────────────────────────
+    #   Back button                         
     # ✅ Inside content_frame using pack — no more place conflict
     back_frame = Frame(content_frame, bg="#a6093d", relief="raised", bd=2)
     back_frame.pack(anchor="w", padx=20, pady=(15, 0))
@@ -59,14 +59,14 @@ def run():
         widget.bind("<Enter>",    on_back_enter)
         widget.bind("<Leave>",    on_back_leave)
 
-    # ── Title ──────────────────────────────────────────────────────
+    #   Title                            
     title_frame = Frame(content_frame, bg="#5D48B8")
     title_frame.pack(pady=20)
     Label(title_frame, text="📜", font=("Arial", 40), bg="#5D48B8", fg="white").pack(side=LEFT, padx=10)
     Label(title_frame, text="Issue History", bg="#5D48B8", fg="white",
           font=("Arial", 24, "bold")).pack(side=LEFT)
 
-    # ── Table ──────────────────────────────────────────────────────
+    #   Table                            
     table_frame = Frame(content_frame, bg="#5D48B8")
     table_frame.pack(pady=20, padx=20)
 
@@ -113,7 +113,7 @@ def run():
 
     display_history(get_all_history())
 
-    # ── Refresh button ─────────────────────────────────────────────
+    #   Refresh button                       ─
     def refresh():
         display_history(get_all_history())
 

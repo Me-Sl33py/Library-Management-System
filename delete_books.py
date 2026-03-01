@@ -39,7 +39,7 @@ def run():
         canvas.yview_scroll(int(-1 * (event.delta / 120)), "units")
     canvas.bind_all("<MouseWheel>", on_mousewheel)
 
-    # ── Back button ────────────────────────────────────────────────
+    #   Back button                         
     back_frame = Frame(content_frame, bg="#a6093d", relief="raised", bd=2)
     back_frame.pack(anchor="w", padx=20, pady=(15, 0))
     back_icon = Label(back_frame, text="←", font=("Arial", 16), bg="#a6093d", fg="white")
@@ -57,14 +57,14 @@ def run():
         widget.bind("<Enter>",    on_back_enter)
         widget.bind("<Leave>",    on_back_leave)
 
-    # ── Title ──────────────────────────────────────────────────────
+    #   Title                            
     title_frame = Frame(content_frame, bg="#5D48B8")
     title_frame.pack(pady=30)
     Label(title_frame, text="🗑️", font=("Arial", 40), bg="#5D48B8", fg="white").pack(side=LEFT, padx=10)
     Label(title_frame, text="Delete Book", bg="#5D48B8", fg="white",
           font=("Arial", 24, "bold")).pack(side=LEFT)
 
-    # ── Table ──────────────────────────────────────────────────────
+    #   Table                            
     table_frame = Frame(content_frame, bg="#0d1b4c")
     table_frame.pack(pady=20, padx=20)
 
@@ -91,7 +91,7 @@ def run():
 
     load_books()
 
-    # ── Buttons ────────────────────────────────────────────────────
+    #   Buttons                           
     def create_icon_button(parent, text, icon, color, command):
         bf = Frame(parent, bg="white", relief="raised", bd=2)
         bf.pack(side=LEFT, padx=10)
@@ -114,7 +114,7 @@ def run():
     button_frame.pack(pady=10)
     create_icon_button(button_frame, "Refresh List", "🔄", "#4CAF50", load_books)
 
-    # ── Delete section ─────────────────────────────────────────────
+    #   Delete section                       ─
     delete_frame = Frame(content_frame, bg="#5D48B8")
     delete_frame.pack(pady=30)
     Label(delete_frame, text="Enter Book ID to Delete:", bg="#5D48B8", fg="white",
@@ -142,7 +142,7 @@ def run():
 
     create_icon_button(delete_frame, "Delete Book", "❌", "#F44336", delete_book)
 
-    # ── Instructions ──────────────────────────────────────────────
+    #   Instructions                        
     instructions_frame = Frame(content_frame, bg="#5D48B8")
     instructions_frame.pack(pady=20)
     Label(instructions_frame,

@@ -38,7 +38,7 @@ def run():
         canvas.yview_scroll(int(-1 * (event.delta / 120)), "units")
     canvas.bind_all("<MouseWheel>", on_mousewheel)
 
-    # ── Back button ────────────────────────────────────────────────
+    #   Back button                         
     # ✅ Inside content_frame using pack
     back_frame = Frame(content_frame, bg="#a6093d", relief="raised", bd=2)
     back_frame.pack(anchor="w", padx=20, pady=(15, 0))
@@ -57,14 +57,14 @@ def run():
         widget.bind("<Enter>",    on_back_enter)
         widget.bind("<Leave>",    on_back_leave)
 
-    # ── Title ──────────────────────────────────────────────────────
+    #   Title                            
     title_frame = Frame(content_frame, bg="#5D48B8")
     title_frame.pack(pady=30)
     Label(title_frame, text="📚", font=("Arial", 40), bg="#5D48B8", fg="white").pack(side=LEFT, padx=10)
     Label(title_frame, text="Available Books", bg="#5D48B8", fg="white",
           font=("Arial", 24, "bold")).pack(side=LEFT)
 
-    # ── Search bar ─────────────────────────────────────────────────
+    #   Search bar                         ─
     search_frame = Frame(content_frame, bg="#5D48B8")
     search_frame.pack(pady=20)
     Label(search_frame, text="Search:", bg="#5D48B8", fg="white",
@@ -102,7 +102,7 @@ def run():
     create_icon_button(search_frame, "Search",  "🔍", "#4CAF50", search_books_action)
     create_icon_button(search_frame, "Refresh", "🔄", "#2196F3", refresh_action)
 
-    # ── Table ──────────────────────────────────────────────────────
+    #   Table                            
     table_frame = Frame(content_frame, bg="#5D48B8")
     table_frame.pack(pady=20, padx=20)
 
@@ -143,7 +143,7 @@ def run():
 
     display_books(get_all_books())
 
-    # ── Stats ──────────────────────────────────────────────────────
+    #   Stats                            
     stats_frame = Frame(content_frame, bg="#5D48B8")
     stats_frame.pack(pady=20)
     stats_label = Label(stats_frame, text="", bg="#5D48B8", fg="white", font=("Arial", 12, "bold"))
@@ -155,7 +155,7 @@ def run():
         stats_label.config(text=f"Total Books: {len(books)} | Total Copies: {total_qty}")
     update_stats()
 
-    # ── Instructions ──────────────────────────────────────────────
+    #   Instructions                        
     instructions_frame = Frame(content_frame, bg="#5D48B8")
     instructions_frame.pack(pady=20)
     Label(instructions_frame,

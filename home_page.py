@@ -3,33 +3,35 @@ import tkinter.messagebox as messagebox
 from function_header_body import header_part, body_part
 
 
-def open_page(root, module_name):
-    """Destroy current window and open another page's run() function."""
+def open_page(root, module_name, username=None):
+    """Destroy current window and open another page."""
     import importlib
     try:
         mod = importlib.import_module(module_name)
         root.destroy()
-        mod.run()
+        if username:
+            mod.run(username)
+        else:
+            mod.run()
     except ModuleNotFoundError:
-        # ✅ Shows friendly error instead of crashing if file is missing
-        messagebox.showerror(
-            "Page Not Found",
-            f"Could not find '{module_name}.py'\n\nMake sure the file exists and is named correctly."
-        )
+        messagebox.showerror("Page Not Found",
+            f"Could not find '{module_name}.py'\n\nMake sure the file exists.")
     except AttributeError:
-        messagebox.showerror(
-            "Missing run()",
-            f"'{module_name}.py' exists but has no run() function.\n\nAdd run() to that file."
-        )
+        messagebox.showerror("Missing run()",
+            f"'{module_name}.py' has no run() function.")
 
 
-def run():
+def run(username="Guest"):
     root = Tk()
     root.title("Library Management System")
     root.geometry("1220x900")
     root.iconbitmap("logo_icon.ico")
 
-    header = header_part(root)
+    # ✅ Profile button opens profile page, passing username
+    def go_to_profile():
+        open_page(root, "profile_page", username)
+
+    header = header_part(root, username=username, on_profile_click=go_to_profile)
     body   = body_part(root)
 
     # ── Main container ─────────────────────────────────────────────
@@ -42,8 +44,6 @@ def run():
     for i in range(2):
         container.rowconfigure(i, weight=1, uniform="row")
 
-    # ── Button definitions ─────────────────────────────────────────
-    # "page" must exactly match the .py filename (without .py)
     buttons = [
         {"text": "Add / Update\nBook", "icon": "📖", "color": "#4CAF50", "page": "add_update"},
         {"text": "Delete Books",        "icon": "🗑️", "color": "#f44336", "page": "delete_books"},
@@ -68,9 +68,8 @@ def run():
                            font=("Arial", 14, "bold"), bg="white", fg="black")
         text_label.pack(pady=(0, 20))
 
-        # ✅ default-arg trick — captures correct page per loop iteration
         def on_click(e, page=btn_info["page"]):
-            open_page(root, page)
+            open_page(root, page, username)
 
         def on_enter(e, f=btn_frame, i=icon_label, t=text_label):
             f.config(bg="aqua"); i.config(bg="aqua"); t.config(bg="aqua")
@@ -87,4 +86,4 @@ def run():
 
 
 if __name__ == "__main__":
-    run()
+    run("Manish")

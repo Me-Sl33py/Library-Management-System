@@ -13,9 +13,9 @@ def create_connection():
         return None
 
 
-# ─────────────────────────────────────────────────────────────────────
+#                                                                      
 # BOOK OPERATIONS
-# ─────────────────────────────────────────────────────────────────────
+#                                                                      
 
 def add_book_to_db(title, author, published_year, quantity):
     """Add a new book to the database"""
@@ -152,9 +152,9 @@ def delete_book_from_db(book_id):
         return False, f"Database error: {e}"
 
 
-# ─────────────────────────────────────────────────────────────────────
+#                                                                      
 # USER OPERATIONS
-# ─────────────────────────────────────────────────────────────────────
+#                                                                      
 
 def get_all_users():
     """Get all registered users from the database"""
@@ -256,9 +256,9 @@ def get_user_by_username(username):
         return None
 
 
-# ─────────────────────────────────────────────────────────────────────
+#                                                                      
 # ISSUE / RETURN OPERATIONS
-# ─────────────────────────────────────────────────────────────────────
+#                                                                      
 
 def add_issue_record(user_id, book_id):
     """Issue a book to a user"""
@@ -368,9 +368,9 @@ def get_active_issues():
         return []
 
 
-# ─────────────────────────────────────────────────────────────────────
+#                                                                      
 # HISTORY
-# ─────────────────────────────────────────────────────────────────────
+#                                                                      
 
 def get_all_history():
     """Retrieve all issue history records with user and book details"""
@@ -411,3 +411,39 @@ def get_all_history():
     except sqlite3.Error as e:
         print(f"Error fetching history: {e}")
         return []
+
+
+#                                                                      
+# PROFILE OPERATIONS
+#                                                                      
+
+def update_username(old_username, new_username):
+    """Rename a user's username."""
+    try:
+        conn = create_connection()
+        if conn is None:
+            return False, "Database connection failed"
+        cursor = conn.cursor()
+        cursor.execute("UPDATE users SET username = ? WHERE username = ?",
+                       (new_username, old_username))
+        conn.commit()
+        conn.close()
+        return True, "Username updated successfully."
+    except sqlite3.Error as e:
+        return False, f"Database error: {e}"
+
+
+def update_password(username, new_password):
+    """Update a user's password."""
+    try:
+        conn = create_connection()
+        if conn is None:
+            return False, "Database connection failed"
+        cursor = conn.cursor()
+        cursor.execute("UPDATE users SET password = ? WHERE username = ?",
+                       (new_password, username))
+        conn.commit()
+        conn.close()
+        return True, "Password updated successfully."
+    except sqlite3.Error as e:
+        return False, f"Database error: {e}"
