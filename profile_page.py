@@ -5,10 +5,10 @@ import database_operations
 
 
 class ProfilePage(Frame):
-    def __init__(self, parent, controller, username="Guest"):
+    def __init__(self, parent, controller, username="Guest", home_page="HomePage"):
         super().__init__(parent)
         header_part(self, username=username,
-                    on_profile_click=lambda: controller.show_frame("HomePage"))
+                    on_profile_click=lambda: controller.show_frame(home_page))
         body = body_part(self)
 
         main = Frame(body, bg="#0d1b4c"); main.pack(fill=BOTH, expand=True)
@@ -21,6 +21,25 @@ class ProfilePage(Frame):
         cf.bind("<Configure>", lambda e: canvas.configure(scrollregion=canvas.bbox("all")))
         canvas.bind("<Configure>", lambda e: canvas.itemconfig(cw, width=e.width))
         canvas.bind_all("<MouseWheel>", lambda e: canvas.yview_scroll(int(-1*(e.delta/120)), "units"))
+
+        # Back button
+        back_f = Frame(cf, bg="#0d1b4c")
+        back_f.pack(anchor="w", padx=200, pady=(30, 0))
+        bf = Frame(back_f, bg="#a6093d", relief="raised", bd=2)
+        bf.pack()
+        bi = Label(bf, text="←", font=("Arial", 16), bg="#a6093d", fg="white")
+        bi.pack(side=LEFT, padx=5)
+        bt = Label(bf, text="Back to Home", font=("Arial", 12), bg="#a6093d", fg="white")
+        bt.pack(side=LEFT, padx=(0, 8))
+        def go_home(e=None): controller.show_frame(home_page)
+        def hl_on(e):
+            for w in (bf, bi, bt): w.config(bg="#4fe4ee")
+        def hl_off(e):
+            for w in (bf, bi, bt): w.config(bg="#a6093d")
+        for w in (bf, bi, bt):
+            w.bind("<Button-1>", go_home)
+            w.bind("<Enter>", hl_on)
+            w.bind("<Leave>", hl_off)
 
         # Centred card
         card = Frame(cf, bg="#5D48B8", bd=2, relief="ridge")
@@ -38,7 +57,7 @@ class ProfilePage(Frame):
             e = Entry(card, font=("Arial", 13), bg="#e6e6e6", show=show, width=35)
             e.pack(ipady=6, padx=60, fill=X); return e
 
-        # ── Change Username ────────────────────────────────────────────
+        #  Change Username 
         Label(card, text="Change Username", font=("Arial", 14, "bold"),
               bg="#5D48B8", fg="#a8d8ff").pack(anchor="w", padx=60, pady=(20, 0))
         e_newname = field("New Username")
@@ -63,7 +82,7 @@ class ProfilePage(Frame):
                cursor="hand2", command=change_username).pack(pady=(10, 5))
         Frame(card, bg="white", height=1).pack(fill=X, padx=30, pady=(15, 0))
 
-        # ── Change Password ────────────────────────────────────────────
+        #  Change Password 
         Label(card, text="Change Password", font=("Arial", 14, "bold"),
               bg="#5D48B8", fg="#a8d8ff").pack(anchor="w", padx=60, pady=(20, 0))
         e_cur  = field("Current Password",            show="*")

@@ -12,7 +12,7 @@ from profile_page        import ProfilePage
 class UserProfilePage(ProfilePage):
     """Profile page for user portal — back button goes to UserHomePage."""
     def __init__(self, parent, controller, username="Guest"):
-        super().__init__(parent, controller, username)
+        super().__init__(parent, controller, username, home_page="UserHomePage")
         # Override the header profile-click to go to UserHomePage
         # (ProfilePage already works; just the sign_out destination is the same)
 
