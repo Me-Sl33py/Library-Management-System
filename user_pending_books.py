@@ -36,10 +36,10 @@ class UserPendingBooksPage(Frame):
         icon_btn(bf, "Refresh", "🔄", "#FF9800", self.load)
 
         self.table = Frame(card, bg="#0d1b4c"); self.table.pack(pady=10, padx=20)
-        for i, (h, w) in enumerate(zip(["Issue ID", "Book Title", "Issue Date"], [10, 35, 15])):
+        for i, (h, w) in enumerate(zip(["Issue ID", "Book Title", "Issue Date", "Due Date"], [10, 30, 14, 14])):
             Label(self.table, text=h, bg="#0d1b4c", fg="white", font=("Arial", 12, "bold"),
                   width=w, relief="ridge", padx=5, pady=5).grid(row=0, column=i, padx=1, pady=1)
-        self.cw = [10, 35, 15]
+        self.cw = [10, 30, 14, 14]
 
         Label(card, text="Return them at the front desk or use Renew Book to extend.",
               bg="#3d2e8a", fg="white", font=("Arial", 10)).pack(pady=(5, 15))
@@ -55,7 +55,13 @@ class UserPendingBooksPage(Frame):
                   ).grid(row=1, column=0, columnspan=3, pady=20); return
         for idx, r in enumerate(records, 1):
             rc = "#1a237e" if idx % 2 == 0 else "#283593"
-            for col, (key, w) in enumerate(zip(['issue_id','book_name','issue_date'], self.cw)):
-                Label(self.table, text=r[key], bg=rc, fg="white", font=("Arial", 11),
+            from datetime import date
+            try:
+                overdue = r['due_date'] != "N/A" and r['due_date'] < date.today().strftime("%Y-%m-%d")
+            except Exception:
+                overdue = False
+            for col, (key, w) in enumerate(zip(['issue_id','book_name','issue_date','due_date'], self.cw)):
+                fg = "#ff6666" if (col == 3 and overdue) else ("white" if col != 3 else "#80ff80")
+                Label(self.table, text=r[key], bg=rc, fg=fg, font=("Arial", 11),
                       width=w, relief="ridge", padx=5, pady=4
                       ).grid(row=idx, column=col, padx=1, pady=1)

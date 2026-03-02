@@ -37,10 +37,10 @@ class UserRenewBookPage(Frame):
               font=("Arial", 13, "bold")).pack(pady=(15, 8))
 
         self.ref_table = Frame(ref_card, bg="#0d1b4c"); self.ref_table.pack(padx=20, pady=(0, 5))
-        for i, (h, w) in enumerate(zip(["Issue ID", "Book Title", "Issue Date"], [10, 35, 15])):
+        for i, (h, w) in enumerate(zip(["Issue ID", "Book Title", "Issue Date", "Due Date"], [10, 28, 13, 13])):
             Label(self.ref_table, text=h, bg="#0d1b4c", fg="white", font=("Arial", 11, "bold"),
                   width=w, relief="ridge", padx=4, pady=4).grid(row=0, column=i, padx=1, pady=1)
-        self.ref_w = [10, 35, 15]
+        self.ref_w = [10, 28, 13, 13]
 
         bf = Frame(ref_card, bg="#3d2e8a"); bf.pack(pady=(8, 15))
         icon_btn(bf, "Refresh", "🔄", "#009688", self.load_ref)
@@ -87,7 +87,7 @@ class UserRenewBookPage(Frame):
                   ).grid(row=1, column=0, columnspan=3, pady=12); return
         for idx, r in enumerate(records, 1):
             rc = "#1a237e" if idx % 2 == 0 else "#283593"
-            for col, (key, w) in enumerate(zip(['issue_id','book_name','issue_date'], self.ref_w)):
+            for col, (key, w) in enumerate(zip(['issue_id','book_name','issue_date','due_date'], self.ref_w)):
                 Label(self.ref_table, text=r[key], bg=rc, fg="white", font=("Arial", 11),
                       width=w, relief="ridge", padx=4, pady=4
                       ).grid(row=idx, column=col, padx=1, pady=1)

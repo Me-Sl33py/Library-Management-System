@@ -175,8 +175,8 @@ def add_issue_record(user_id, book_id):
             conn.close(); return False, f"'{book[0]}' is out of stock"
         today = datetime.now().strftime("%Y-%m-%d")
         cursor.execute(
-            "INSERT INTO issues (user_id,book_id,issue_date,status) VALUES (?,?,?,'issued')",
-            (user_id, book_id, today))
+            "INSERT INTO issues (user_id,book_id,issue_date,due_date,status) VALUES (?,?,?,date(?,'+14 days'),'issued')",
+            (user_id, book_id, today, today))
         cursor.execute(
             "UPDATE books SET quantity=quantity-1 WHERE book_id=?", (book_id,))
         conn.commit(); conn.close(); return True, "Book issued successfully!"
@@ -242,14 +242,15 @@ def get_user_pending_books(username):
     try:
         conn = create_connection(); cursor = conn.cursor()
         cursor.execute("""
-            SELECT i.issue_id, b.title, i.issue_date
+            SELECT i.issue_id, b.title, i.issue_date, i.due_date
             FROM issues i
             JOIN users u ON i.user_id=u.user_id
             JOIN books b ON i.book_id=b.book_id
             WHERE u.username=? AND i.return_date IS NULL
             ORDER BY i.issue_date DESC""", (username,))
         rows = cursor.fetchall(); conn.close()
-        return [{'issue_id':r[0],'book_name':r[1],'issue_date':r[2]} for r in rows]
+        return [{'issue_id':r[0],'book_name':r[1],'issue_date':r[2],
+                 'due_date': r[3] if r[3] else "N/A"} for r in rows]
     except sqlite3.Error as e:
         print(e); return []
 
@@ -282,7 +283,7 @@ def renew_book(username, issue_id):
         if not cursor.fetchone():
             conn.close(); return False, "Issue not found, already returned, or not yours"
         cursor.execute(
-            "UPDATE issues SET issue_date=date(issue_date,'+7 days') WHERE issue_id=?",
+            "UPDATE issues SET due_date=date(due_date,'+7 days') WHERE issue_id=?",
             (issue_id,))
         conn.commit(); conn.close(); return True, "Renewed! Extended by 7 days."
     except sqlite3.Error as e:

@@ -27,6 +27,7 @@ def create_tables():
         user_id     INTEGER NOT NULL,
         book_id     INTEGER NOT NULL,
         issue_date  TEXT NOT NULL,
+        due_date    TEXT,
         return_date TEXT,
         status      TEXT CHECK(status IN ('issued','returned')) NOT NULL DEFAULT 'issued',
         FOREIGN KEY (user_id) REFERENCES users(user_id),
@@ -70,10 +71,20 @@ def seed_data():
         if cursor.fetchone()[0] == 0:
             today = datetime.now().strftime("%Y-%m-%d")
             cursor.execute(
-                "INSERT INTO issues (user_id,book_id,issue_date,status) VALUES (3,1,?,'issued')",
-                (today,))
+                "INSERT INTO issues (user_id,book_id,issue_date,due_date,status) VALUES (3,1,?,date(?,'+14 days'),'issued')",
+                (today, today))
             cursor.execute("UPDATE books SET quantity=quantity-1 WHERE book_id=1")
-            print("✅ Sample issue added")
+
+        # Migrate: add due_date column if it doesn't exist yet
+        try:
+            cursor.execute("ALTER TABLE issues ADD COLUMN due_date TEXT")
+            # Backfill existing rows: due_date = issue_date + 14 days
+            cursor.execute("UPDATE issues SET due_date = date(issue_date, '+14 days') WHERE due_date IS NULL")
+            conn.commit()
+            print("✅ due_date column added and backfilled")
+        except Exception:
+            pass  # column already exists
+        print("✅ Sample issue added")
 
         conn.commit()
         print("✅ Database ready!")
