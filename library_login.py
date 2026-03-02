@@ -87,7 +87,7 @@ class LibraryApp:
         ).pack()
 
         #  Divider 
-        tk.Frame(inner, bg="white", width=2).grid(
+        tk.Frame(inner, bg="white", width=2, height=500).grid(
             row=0, column=1, sticky="ns", padx=10, pady=20)
 
         #  Right: profile image + form 
